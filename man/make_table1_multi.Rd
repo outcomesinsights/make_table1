@@ -21,8 +21,8 @@ make_table1_multi(
 \arguments{
 \item{data}{Data frame with variables of interest}
 
-\item{vars}{Character vector of variable names, or a 2-column data frame
-with variable names and labels}
+\item{vars}{Character vector of variable names, a 2-column data frame,
+a nested list structure, or a YAML string/file (see \code{\link{make_table1}})}
 
 \item{subgroups}{Named list defining subgroups. Each element can be:
 \itemize{
@@ -57,7 +57,6 @@ with variable names and labels}
 Returns a data frame with columns:
 \itemize{
 \item varname: Variable name/label
-\item level: Level (for categorical variables) or empty string
 \item One column per subgroup containing the statistics
 \item n: Sample size (only for first column if include_all=TRUE)
 }

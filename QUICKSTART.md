@@ -2,6 +2,21 @@
 
 ## Installation
 
+### For Development (Quick Testing)
+
+**Easiest way - use the helper script:**
+```r
+source("/Users/mark/Documents/rprojects/package_development/table1/LOAD_FOR_DEVELOPMENT.R")
+```
+
+**Or manually:**
+```r
+library(devtools)
+load_all("/Users/mark/Documents/rprojects/package_development/table1")
+```
+
+### For Production Use
+
 ```r
 # Install devtools if needed
 install.packages("devtools")
@@ -12,6 +27,8 @@ devtools::install("/Users/mark/Documents/rprojects/package_development/table1")
 # Load the package
 library(table1)
 ```
+
+**Note:** Replace `/Users/mark/Documents/rprojects/package_development/table1` with your actual package path if different.
 
 ## Basic Usage
 

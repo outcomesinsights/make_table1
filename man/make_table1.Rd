@@ -81,7 +81,6 @@ Values should be "continuous", "binary", or "categorical".}
 Returns Table 1 as a data frame with columns:
 \itemize{
 \item varname: Variable name/label
-\item level: Level (for categorical variables) or empty string
 \item statistic: Formatted statistic (Mean (SD) or \% (n))
 \item n: Sample size
 \item (if group specified): group1_stat, group2_stat, smd

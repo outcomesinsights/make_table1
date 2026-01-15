@@ -68,7 +68,6 @@
 #' @return Returns Table 1 as a data frame with columns:
 #'   \itemize{
 #'     \item varname: Variable name/label
-#'     \item level: Level (for categorical variables) or empty string
 #'     \item statistic: Formatted statistic (Mean (SD) or % (n))
 #'     \item n: Sample size
 #'     \item (if group specified): group1_stat, group2_stat, smd
@@ -241,7 +240,6 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
       # Add subheader row
       subheader_row <- data.frame(
         varname = var_subheader,
-        level = "",
         statistic = NA_character_,
         n = NA_integer_,
         stringsAsFactors = FALSE
@@ -261,7 +259,6 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
       # Create a subheader row (fallback for old-style subheaders)
       subheader_row <- data.frame(
         varname = var_label,
-        level = "",
         statistic = NA_character_,
         n = NA_integer_,
         stringsAsFactors = FALSE

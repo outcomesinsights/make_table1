@@ -12,8 +12,8 @@
 #' }
 #'
 #' @param data Data frame with variables of interest
-#' @param vars Character vector of variable names, or a 2-column data frame
-#'   with variable names and labels
+#' @param vars Character vector of variable names, a 2-column data frame,
+#'   a nested list structure, or a YAML string/file (see \code{\link{make_table1}})
 #' @param subgroups Named list defining subgroups. Each element can be:
 #'   \itemize{
 #'     \item A character string naming a grouping variable (for mutually exclusive groups)
@@ -38,7 +38,6 @@
 #' @return Returns a data frame with columns:
 #'   \itemize{
 #'     \item varname: Variable name/label
-#'     \item level: Level (for categorical variables) or empty string
 #'     \item One column per subgroup containing the statistics
 #'     \item n: Sample size (only for first column if include_all=TRUE)
 #'   }
@@ -96,27 +95,60 @@ make_table1_multi <- function(data, vars, subgroups = NULL,
   
   empty_subgroup_handling <- match.arg(empty_subgroup_handling)
   
-  # Handle vars input
-  if (is.data.frame(vars) && ncol(vars) >= 2) {
+  # Handle vars input - can be character vector, 2-column data frame, nested list, or YAML
+  parsed_varlist <- NULL
+  var_overrides <- list(center_funs = list(), spread_funs = list())
+  
+  # Check if vars is a YAML string or file path
+  if (is.character(vars) && length(vars) == 1 && 
+      (grepl("\n", vars) || grepl("^[A-Za-z_]", vars) && 
+       (grepl(":", vars) || file.exists(vars)))) {
+    # Likely YAML - try to parse it
+    if (requireNamespace("yaml", quietly = TRUE)) {
+      vars <- parse_yaml_varlist(vars, file = file.exists(vars))
+    } else {
+      warning("YAML input detected but 'yaml' package not available. ",
+              "Install with: install.packages('yaml'). ",
+              "Treating as character vector instead.")
+    }
+  }
+  
+  if (is.list(vars) && !is.data.frame(vars) && 
+      (is.null(names(vars)) || any(sapply(vars, is.list)))) {
+    # Nested list structure - parse it
+    parsed_varlist <- .parse_varlist(vars)
+    var_names <- parsed_varlist$vars$var
+    var_labels <- parsed_varlist$vars$label
+    var_subheaders <- parsed_varlist$vars$subheader
+    var_overrides$center_funs <- parsed_varlist$center_funs
+    var_overrides$spread_funs <- parsed_varlist$spread_funs
+  } else if (is.data.frame(vars) && ncol(vars) >= 2) {
+    # vars is a data frame with variable names and labels
     var_names <- vars[[1]]
     var_labels <- vars[[2]]
+    var_subheaders <- if ("subheader" %in% names(vars)) vars$subheader else rep("", length(var_names))
   } else if (is.character(vars)) {
+    # vars is a character vector
     var_names <- vars
     var_labels <- if (!is.null(labels)) {
       if (is.data.frame(labels) && ncol(labels) >= 2) {
+        # Match labels from data frame
         label_df <- labels
         var_labels <- label_df[[2]][match(var_names, label_df[[1]])]
         var_labels[is.na(var_labels)] <- var_names[is.na(var_labels)]
       } else if (is.vector(labels) && !is.null(names(labels))) {
+        # Named vector
         labels[var_names]
       } else {
+        # Use variable names as labels
         var_names
       }
     } else {
       var_names
     }
+    var_subheaders <- rep("", length(var_names))
   } else {
-    stop("'vars' must be a character vector or a 2-column data frame")
+    stop("'vars' must be a character vector, a 2-column data frame, or a nested list")
   }
   
   # Check for missing variables - these might be subheaders
@@ -250,16 +282,32 @@ make_table1_multi <- function(data, vars, subgroups = NULL,
       subgroup_tables[[i]] <- NULL
     } else {
       # Create table for this subgroup
-      sub_table <- make_table1(
-        data = sub_data,
-        vars = data.frame(var = var_names, label = var_labels, stringsAsFactors = FALSE),
-        labels = NULL,
-        digits = digits,
-        center_fun = center_fun,
-        spread_fun = spread_fun,
-        group = NULL,
-        var_types = var_types
-      )
+      # Use the same format as was provided (nested list, data frame, or character)
+      if (!is.null(parsed_varlist)) {
+        # Use nested list format if that's what was provided
+        sub_table <- make_table1(
+          data = sub_data,
+          vars = vars,  # Pass original nested list
+          labels = NULL,
+          digits = digits,
+          center_fun = center_fun,
+          spread_fun = spread_fun,
+          group = NULL,
+          var_types = var_types
+        )
+      } else {
+        # Use data frame or character format
+        sub_table <- make_table1(
+          data = sub_data,
+          vars = data.frame(var = var_names, label = var_labels, stringsAsFactors = FALSE),
+          labels = NULL,
+          digits = digits,
+          center_fun = center_fun,
+          spread_fun = spread_fun,
+          group = NULL,
+          var_types = var_types
+        )
+      }
       
       # Handle empty subgroup statistics
       if (empty_subgroup_handling == "zero") {

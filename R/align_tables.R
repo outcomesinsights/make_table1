@@ -37,8 +37,8 @@
     return(tables)
   }
   
-  # Get reference structure: varname and level combinations
-  ref_structure <- ref_table[, c("varname", "level"), drop = FALSE]
+  # Get reference structure: varname only (level column removed)
+  ref_structure <- ref_table[, c("varname"), drop = FALSE]
   
   # Align each table to reference structure
   aligned_tables <- vector("list", length(tables))
@@ -48,35 +48,49 @@
     
     # If table is NULL or empty, create empty structure
     if (is.null(table_i) || nrow(table_i) == 0) {
+      # Create empty structure matching reference
       aligned_tables[[i]] <- data.frame(
         varname = ref_structure$varname,
-        level = ref_structure$level,
         statistic = NA_character_,
         n = 0L,
         stringsAsFactors = FALSE
       )
+      # Add any additional columns from reference (like group1_stat, group2_stat, smd)
+      ref_cols <- setdiff(names(ref_table), c("varname", "statistic", "n", "level"))
+      for (col in ref_cols) {
+        aligned_tables[[i]][[col]] <- NA
+      }
       next
     }
     
-    # Create keys for matching
-    ref_key <- paste(ref_structure$varname, ref_structure$level, sep = "|||")
-    table_i_key <- paste(table_i$varname, table_i$level, sep = "|||")
+    # Create keys for matching (using varname only)
+    ref_key <- ref_structure$varname
+    table_i_key <- table_i$varname
     
     # Match table_i rows to reference structure
     match_idx <- match(ref_key, table_i_key)
     
-    # Create aligned table
-    aligned <- ref_structure
+    # Create aligned table - start with reference structure
+    aligned <- data.frame(
+      varname = ref_structure$varname,
+      stringsAsFactors = FALSE
+    )
+    
+    # Add statistic column
     aligned$statistic <- ifelse(
       is.na(match_idx),
       NA_character_,
       table_i$statistic[match_idx]
     )
-    aligned$n <- ifelse(
-      is.na(match_idx),
-      0L,
-      table_i$n[match_idx]
-    )
+    
+    # Add n column if it exists in table_i
+    if ("n" %in% names(table_i)) {
+      aligned$n <- ifelse(
+        is.na(match_idx),
+        0L,
+        table_i$n[match_idx]
+      )
+    }
     
     # Handle any additional columns from table_i (like group1_stat, group2_stat, smd)
     other_cols <- setdiff(names(table_i), c("varname", "level", "statistic", "n"))

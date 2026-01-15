@@ -1,5 +1,7 @@
 # Installing the table1 Package
 
+> **See [INSTALLATION_COMPARISON.md](INSTALLATION_COMPARISON.md) for a detailed comparison of installation options**
+
 ## Installation Methods
 
 ### Method 1: Install from Local Directory (Recommended for Development)
@@ -28,13 +30,29 @@ install.packages("/path/to/table1_0.0.0.9000.tar.gz", repos = NULL, type = "sour
 
 ### Method 3: Load for Development (Without Installing)
 
+**Option A: Using the helper script (Easiest)**
+```r
+# Run the helper script
+source("/Users/mark/Documents/rprojects/package_development/table1/LOAD_FOR_DEVELOPMENT.R")
+```
+
+**Option B: Manual load**
 ```r
 # Load devtools
 library(devtools)
 
-# Load the package directly (for development/testing)
+# IMPORTANT: Use the actual path to your package directory
 load_all("/Users/mark/Documents/rprojects/package_development/table1")
 ```
+
+**Option C: From within the package directory**
+```r
+# If you're already in the package directory
+library(devtools)
+load_all()  # Uses current directory
+```
+
+**Note:** After making code changes, run `load_all()` again to reload the package with your changes.
 
 ## After Installation
 

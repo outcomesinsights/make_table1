@@ -38,7 +38,6 @@
   if (var_type == "empty" || n_valid == 0) {
     return(data.frame(
       varname = label,
-      level = "",
       statistic = NA_character_,
       n = 0L,
       stringsAsFactors = FALSE
@@ -68,7 +67,6 @@
     
     return(data.frame(
       varname = label,
-      level = "",
       statistic = statistic,
       n = n_valid,
       stringsAsFactors = FALSE
@@ -104,7 +102,6 @@
     
     return(data.frame(
       varname = label,
-      level = ref_level,
       statistic = statistic,
       n = n_valid,
       stringsAsFactors = FALSE
@@ -130,9 +127,11 @@
       pct_fmt <- fmt(pct, digits = digits)
       n_fmt <- fmt(n_level, digits = 0)
       
+      # For categorical variables, create separate rows for each level
+      # Use the level name as part of the varname for clarity
+      level_label <- paste0(label, " - ", level_i)
       result_rows[[i]] <- data.frame(
-        varname = if (i == 1) label else "",
-        level = level_i,
+        varname = level_label,
         statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
         n = n_valid,
         stringsAsFactors = FALSE
@@ -156,7 +155,6 @@
   
   return(data.frame(
     varname = label,
-    level = "",
     statistic = statistic,
     n = n_valid,
     stringsAsFactors = FALSE
@@ -224,7 +222,6 @@
     # Combine results
     result <- data.frame(
       varname = label,
-      level = "",
       group1_stat = sum1$statistic,
       group2_stat = sum2$statistic,
       smd = fmt(smd, digits = digits),
@@ -269,7 +266,6 @@
     # Combine results (simplified - would need to handle multiple levels)
     result <- data.frame(
       varname = label,
-      level = sum1$level,
       group1_stat = sum1$statistic,
       group2_stat = sum2$statistic,
       smd = fmt(smd, digits = digits),
@@ -282,7 +278,6 @@
   # Default: return without SMD
   result <- data.frame(
     varname = label,
-    level = sum1$level,
     group1_stat = sum1$statistic,
     group2_stat = sum2$statistic,
     smd = NA_character_,
