@@ -16,7 +16,7 @@ Description: A lightweight R package for creating Table 1, which typically
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.3.0
+RoxygenNote: 7.3.3
 Suggests: 
     testthat (>= 3.0.0),
     yaml
