@@ -4,18 +4,21 @@ Title: Create Table 1 for Descriptive Statistics
 Version: 0.0.0.9000
 Authors@R: 
     person("Your Name", "Your Role", email = "your.email@example.com", role = c("aut", "cre"))
-Description: A lightweight, dependency-free R package for creating Table 1,
-    which typically contains descriptive information about persons under study
-    in statistical analyses. Table 1 provides summary statistics for baseline
-    characteristics. Features include automatic variable type detection, flexible
-    summary statistics (mean/median, SD/IQR), optional standardized mean
-    differences (SMD) for group comparisons, and multi-column tables for
-    comparing multiple subgroups. Uses only base R with no external dependencies.
+Description: A lightweight R package for creating Table 1, which typically
+    contains descriptive information about persons under study in statistical
+    analyses. Table 1 provides summary statistics for baseline characteristics.
+    Features include automatic variable type detection, flexible summary
+    statistics (mean/median, SD/IQR), optional standardized mean differences
+    (SMD) for group comparisons, and multi-column tables for comparing multiple
+    subgroups. Supports YAML specification for easy variable definition. Core
+    functionality uses only base R; YAML parsing requires the 'yaml' package
+    (suggested dependency).
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.3.0
 Suggests: 
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    yaml
 Config/testthat/edition: 3
 Roxygen: list(markdown = TRUE)

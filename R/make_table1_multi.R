@@ -119,11 +119,8 @@ make_table1_multi <- function(data, vars, subgroups = NULL,
     stop("'vars' must be a character vector or a 2-column data frame")
   }
   
-  # Validate variables exist
-  missing_vars <- var_names[!var_names %in% names(data)]
-  if (length(missing_vars) > 0) {
-    stop("Variables not found in data: ", paste(missing_vars, collapse = ", "))
-  }
+  # Check for missing variables - these might be subheaders
+  # (will be handled in make_table1, so we don't error here)
   
   # Process subgroups
   subgroup_list <- list()
