@@ -78,40 +78,80 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #' Add Table 1 to Word Document
 #'
 #' Converts a Table 1 result to a flextable and adds it to a Word document,
-#' optionally with a caption.
+#' optionally with a caption. If \code{data}, \code{vars}, and \code{subgroups}
+#' are provided, automatically creates individual tables for each subgroup
+#' instead of using \code{table1_result}.
 #'
 #' @param doc An \code{officer} document object.
-#' @param table1_result Output from \code{\link{make_table1}}.
-#' @param caption Character string, optional table caption. If NULL (default),
-#'   no caption is added.
+#' @param table1_result Output from \code{\link{make_table1}}. Ignored if
+#'   \code{data}, \code{vars}, and \code{subgroups} are provided.
+#' @param caption Character string, optional table caption. For individual
+#'   tables, this is used as a prefix with subgroup name appended.
 #' @param caption_style Character string, style for the caption. Default: "caption".
+#' @param data Data frame containing the data. If provided along with \code{vars}
+#'   and \code{subgroups}, individual tables are created for each subgroup.
+#' @param vars Variable specification (as used in \code{\link{make_table1}}).
+#' @param subgroups Named list of filter functions for creating individual tables.
+#' @param section_prefix Character string prefix for section headings when
+#'   creating individual tables. Default: "Tables for".
+#' @param caption_prefix Character string prefix for table captions when
+#'   creating individual tables. Default: "Table 1:  Population Characteristics for".
+#' @param caption_suffix Character string suffix for table captions when
+#'   creating individual tables. Default: " Patients".
+#' @param section_style Character string, paragraph style for section headings.
+#'   Default: "heading 1".
+#' @param add_page_breaks Logical, whether to add page breaks between individual
+#'   tables. Default: TRUE.
+#' @param first_table_pos Character string, position for first table section heading.
+#'   Options: "before" or "after" (default).
+#' @param digits Numeric, number of decimal places for summary statistics when
+#'   creating individual tables. Default: 1.
 #' @param ... Additional arguments passed to \code{\link{table1_to_flextable}}.
 #'
 #' @return The modified \code{officer} document object.
 #'
 #' @details
-#' This function combines \code{\link{table1_to_flextable}} and
-#' \code{officer::body_add_flextable()} to add a formatted Table 1 to the document.
-#' All formatting options from \code{table1_to_flextable()} can be passed via \code{...}.
+#' If \code{data}, \code{vars}, and \code{subgroups} are all provided, this
+#' function automatically creates individual Table 1 tables for each subgroup
+#' by filtering the data and adding them to the document with section headings,
+#' captions, and page breaks. Otherwise, it adds the \code{table1_result} as-is.
 #'
 #' @examples
 #' \dontrun{
+#' # Single table
 #' table1 <- make_table1(data, vars = c("age", "sex"))
 #' doc <- table1_word_doc() |>
 #'   add_table1(table1, caption = "Table 1: Patient Characteristics")
 #'
-#' # With formatting options
+#' # Individual tables for each subgroup (automatic)
 #' doc <- table1_word_doc() |>
 #'   add_table1(
-#'     table1,
-#'     caption = "Table 1: Characteristics",
-#'     multiline_header = TRUE,
-#'     footer_text = "Note: Results presented as % (count) for categorical variables..."
+#'     data = dt_prep,
+#'     vars = varlist,
+#'     subgroups = list(
+#'       "All Diagnosed" = function(d) rep(TRUE, nrow(d)),
+#'       "No Treatment" = function(d) d$treatment == "None"
+#'     ),
+#'     footer_text = "Note: Results presented as % (count)..."
 #'   )
 #' }
 #'
 #' @export
-add_table1 <- function(doc, table1_result, caption = NULL, caption_style = "caption", ...) {
+add_table1 <- function(doc,
+                      table1_result = NULL,
+                      caption = NULL,
+                      caption_style = "caption",
+                      data = NULL,
+                      vars = NULL,
+                      subgroups = NULL,
+                      section_prefix = "Tables for",
+                      caption_prefix = "Table 1:  Population Characteristics for",
+                      caption_suffix = " Patients",
+                      section_style = "heading 1",
+                      add_page_breaks = TRUE,
+                      first_table_pos = "after",
+                      digits = 1,
+                      ...) {
   if (!requireNamespace("officer", quietly = TRUE)) {
     stop("The 'officer' package is required. Install with: install.packages('officer')")
   }
@@ -120,15 +160,99 @@ add_table1 <- function(doc, table1_result, caption = NULL, caption_style = "capt
     stop("'doc' must be an officer document object from table1_word_doc()")
   }
   
-  # Add caption if provided
-  if (!is.null(caption)) {
-    caption_obj <- officer::block_caption(label = caption, style = caption_style)
-    doc <- officer::body_add_caption(doc, caption_obj)
-  }
+  # Check if we should create individual tables
+  create_individual <- !is.null(data) && !is.null(vars) && !is.null(subgroups)
   
-  # Convert to flextable and add to document
-  ft <- table1_to_flextable(table1_result, ...)
-  doc <- officer::body_add_flextable(doc, ft)
+  if (create_individual) {
+    # Create individual tables for each subgroup
+    if (!is.data.frame(data)) {
+      stop("'data' must be a data frame")
+    }
+    
+    if (is.null(subgroups) || length(subgroups) == 0) {
+      stop("'subgroups' must be a non-empty named list of filter functions")
+    }
+    
+    subgroup_names <- names(subgroups)
+    if (is.null(subgroup_names) || any(subgroup_names == "")) {
+      stop("'subgroups' must have non-empty names")
+    }
+    
+    # Loop through each subgroup
+    for (i in seq_along(subgroup_names)) {
+      group_name <- subgroup_names[i]
+      filter_func <- subgroups[[group_name]]
+      
+      # Validate filter function
+      if (!is.function(filter_func)) {
+        stop("Subgroup '", group_name, "' must be a function")
+      }
+      
+      # Filter data
+      filter_mask <- tryCatch(
+        filter_func(data),
+        error = function(e) {
+          stop("Error applying filter for subgroup '", group_name, "': ", e$message)
+        }
+      )
+      
+      if (!is.logical(filter_mask) || length(filter_mask) != nrow(data)) {
+        stop("Filter function for subgroup '", group_name, "' must return a logical vector of length nrow(data)")
+      }
+      
+      dti <- data[filter_mask, , drop = FALSE]
+      
+      # Create table for this subgroup
+      table1_single <- make_table1(
+        data = dti,
+        vars = vars,
+        digits = digits
+      )
+      
+      # Create section heading and caption
+      sectcap <- paste0(section_prefix, " ", group_name, caption_suffix)
+      tab1cap <- if (is.null(caption)) {
+        paste0(
+          caption_prefix,
+          group_name,
+          caption_suffix,
+          " (N = ",
+          fmt(nrow(dti), 0),
+          ")"
+        )
+      } else {
+        paste0(caption, ": ", group_name, " (N = ", fmt(nrow(dti), 0), ")")
+      }
+      
+      # Determine position for first table
+      table_pos <- if (i == 1) first_table_pos else "after"
+      
+      # Add to document
+      doc <- doc |>
+        add_section_heading(sectcap, style = section_style, pos = table_pos) |>
+        add_table1(table1_single, caption = tab1cap, caption_style = caption_style, ...)
+      
+      # Add page break if requested (but not after the last table)
+      if (add_page_breaks && i < length(subgroup_names)) {
+        doc <- add_page_break(doc)
+      }
+    }
+  } else {
+    # Use table1_result as-is
+    if (is.null(table1_result)) {
+      stop("Either 'table1_result' must be provided, or 'data', 'vars', and 'subgroups' must all be provided")
+    }
+    
+    # Add caption if provided
+    if (!is.null(caption)) {
+      caption_obj <- officer::block_caption(label = caption, style = caption_style)
+      doc <- officer::body_add_caption(doc, caption_obj)
+    }
+    
+    # Convert to flextable and add to document
+    ft <- table1_to_flextable(table1_result, ...)
+    doc <- officer::body_add_flextable(doc, ft)
+  }
   
   return(doc)
 }
