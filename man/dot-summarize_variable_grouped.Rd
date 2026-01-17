@@ -31,7 +31,7 @@
 
 \item{spread_fun}{Function for spread statistic (sd, IQR, etc.)}
 
-\item{group}{Optional grouping variable for SMD calculation}
+\item{group}{Deprecated. Not currently used (SMD functionality removed).}
 
 \item{scaling}{Scaling factor for percentages (default = 100)}
 }
@@ -40,5 +40,9 @@ Data frame with group statistics and SMD
 }
 \description{
 Internal function to summarize a variable by group and calculate SMD.
+}
+\details{
+TODO: This function is currently not used. SMD functionality has been
+temporarily removed. Re-implement in future version if needed.
 }
 \keyword{internal}

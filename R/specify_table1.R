@@ -248,6 +248,9 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
     stop("'vars' must be a character vector, a 2-column data frame, or a nested list")
   }
   
+  # Check for variables that should be factors and warn user
+  .warn_about_missing_factors(data, var_names, var_overrides$levels, var_types)
+  
   # If we have group or subgroups, create multi-column table
   if (has_group || has_subgroups || (include_all && (has_group || has_subgroups))) {
     # Convert group to subgroups format if needed
@@ -293,6 +296,79 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       spread_fun = spread_fun,
       var_types = var_types
     ))
+  }
+}
+
+#' Check for variables that should be factors and warn user
+#'
+#' Identifies character/logical variables that are categorical but not factors,
+#' and warns the user that they should be converted to factors for automatic
+#' subheader + indented level display.
+#'
+#' @param data Data frame or data table
+#' @param var_names Character vector of variable names to check
+#' @param level_specs Named list of level specifications (variables with explicit levels are skipped)
+#' @param var_types Optional named character vector of variable types
+#'
+#' @keywords internal
+.warn_about_missing_factors <- function(data, var_names, level_specs, var_types = NULL) {
+  missing_factors <- character()
+  
+  for (var_name in var_names) {
+    # Skip if variable doesn't exist
+    if (!var_name %in% names(data)) {
+      next
+    }
+    
+    # Skip if already a factor
+    if (is.factor(data[[var_name]])) {
+      next
+    }
+    
+    # Skip if has explicit level specifications (user is handling it manually)
+    if (!is.null(level_specs) && var_name %in% names(level_specs)) {
+      next
+    }
+    
+    # Get variable
+    x <- data[[var_name]]
+    
+    # Only check character or logical variables
+    if (!is.character(x) && !is.logical(x)) {
+      next
+    }
+    
+    # Detect type if not provided
+    if (is.null(var_types) || !var_name %in% names(var_types)) {
+      var_type <- .detect_type(data, var_name)
+    } else {
+      var_type <- var_types[[var_name]]
+    }
+    
+    # Only warn if categorical (not continuous, binary, or other)
+    if (var_type == "categorical") {
+      missing_factors <- c(missing_factors, var_name)
+    }
+  }
+  
+  # Issue warning if any variables need conversion
+  if (length(missing_factors) > 0) {
+    if (length(missing_factors) == 1) {
+      warning(
+        "Variable '", missing_factors[1], "' is categorical but not a factor. ",
+        "Consider converting it to a factor for automatic subheader + indented level display.\n",
+        "  Example: data$", missing_factors[1], " <- factor(data$", missing_factors[1], ")",
+        call. = FALSE
+      )
+    } else {
+      var_list <- paste0("'", missing_factors, "'", collapse = ", ")
+      warning(
+        "The following variables are categorical but not factors: ", var_list, ".\n",
+        "Consider converting them to factors for automatic subheader + indented level display.\n",
+        "  Example: data$", missing_factors[1], " <- factor(data$", missing_factors[1], ")",
+        call. = FALSE
+      )
+    }
   }
 }
 

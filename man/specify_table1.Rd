@@ -12,7 +12,11 @@ specify_table1(
   center_fun = mean,
   spread_fun = sd,
   group = NULL,
-  var_types = NULL
+  subgroups = NULL,
+  include_all = NULL,
+  all_label = "All",
+  var_types = NULL,
+  empty_subgroup_handling = c("na", "zero", "skip")
 )
 }
 \arguments{
@@ -79,20 +83,40 @@ Other options: \code{median}, or custom function.}
 \item{spread_fun}{Function for spread statistic of continuous variables (default = \code{sd}).
 Other options: \code{IQR} (for interquartile range), or custom function.}
 
-\item{group}{Optional character string name of grouping variable for calculating
-standardized mean differences (SMD) between two groups.}
+\item{group}{Optional character string name of grouping variable. Creates columns
+for each level of the factor variable.}
+
+\item{subgroups}{Optional named list defining custom subgroups/columns. Each element can be:
+\itemize{
+\item A character string naming a grouping variable (for mutually exclusive groups)
+\item A function that filters the data (returns logical vector)
+\item A list with 'filter' (function) and optional 'label' (character)
+}}
+
+\item{include_all}{Logical, whether to include a column for all observations
+(default = TRUE if no group or subgroups specified, FALSE otherwise)}
+
+\item{all_label}{Label for the "all" column (default = "All")}
 
 \item{var_types}{Optional named character vector to override automatic type detection.
 Values should be "continuous", "binary", or "categorical".}
+
+\item{empty_subgroup_handling}{How to handle empty subgroups:
+\itemize{
+\item "na" - Return NA for statistics (default)
+\item "zero" - Return "0" or "0 (0)" for statistics
+\item "skip" - Skip empty subgroups (not recommended for column alignment)
+}}
 }
 \value{
 Returns Table 1 as a data frame with columns:
 \itemize{
 \item varname: Variable name/label
-\item statistic: Formatted statistic (Mean (SD) or \% (n))
-\item n: Sample size
-\item (if group specified): group1_stat, group2_stat, smd
+\item One or more columns containing statistics (one per subgroup/group level)
+\item n: Sample size (for first column)
 }
+If multiple columns are created, the result includes an attribute "sample_sizes"
+with sample sizes for each column.
 }
 \description{
 Creates a Table 1 summary table that provides descriptive statistics
@@ -115,6 +139,10 @@ For factor variables specified without a \code{levels} specification, the functi
 automatically creates a subheader row with the variable label, followed by indented
 rows for each factor level (indented with 2 spaces). This provides a clear hierarchical
 structure in the table output.
+
+The function supports both single-column and multi-column tables. Use the \code{group}
+parameter to create columns from a factor variable, or \code{subgroups} to define
+custom columns (including non-mutually exclusive subsets).
 }
 \examples{
 # Create test data
@@ -125,7 +153,7 @@ data <- data.frame(
   score = runif(100, 0, 100)
 )
 
-# Simple usage with variable names
+# Simple usage with variable names (single column)
 table1 <- specify_table1(data, vars = c("age", "sex", "treated", "score"))
 print(table1)
 
@@ -136,68 +164,28 @@ varlist <- data.frame(
 )
 table1 <- specify_table1(data, vars = varlist)
 
-# With median and IQR instead of mean and SD
-table1 <- specify_table1(
-  data, 
-  vars = c("age", "score"),
-  center_fun = median,
-  spread_fun = IQR
-)
-
-# With grouping for SMD calculation
+# Multi-column table by grouping variable
 data$group <- rep(c("A", "B"), 50)
-table1_smd <- specify_table1(
+table1_multi <- specify_table1(
   data,
   vars = c("age", "sex", "treated"),
   group = "group"
+)
+
+# Multi-column table with custom subgroups
+table1_multi <- specify_table1(
+  data,
+  vars = c("age", "sex", "treated"),
+  subgroups = list(
+    "Treated" = function(d) d$treated == TRUE,
+    "Untreated" = function(d) d$treated == FALSE
+  ),
+  include_all = TRUE
 )
 
 # Factor variables automatically create subheader + indented levels
 data$race <- factor(rep(c("White", "Black", "Asian"), c(30, 20, 50)))
 table1_factor <- specify_table1(data, vars = c("age", "race"))
 # Output: "race" as subheader, then "  White", "  Black", "  Asian" as indented rows
-
-# With subheaders to group variables (data frame method)
-varlist <- data.frame(
-  var = c("**Demographics**", "age", "sex", "**Treatment**", "treated"),
-  label = c("**Demographics**", "Age (years)", "Sex", "**Treatment**", "Treated")
-)
-table1 <- specify_table1(data, vars = varlist)
-
-# With nested list structure (recommended for complex tables)
-varlist <- list(
-  "Patient Characteristics" = list(
-    "Demographics" = list(
-      age = "Age (years)",
-      sex = "Sex"
-    ),
-    "Treatment" = list(
-      treated = "Treated",
-      score = list(var = "score", label = "Score", 
-                  center_fun = median, spread_fun = IQR)
-    )
-  )
-)
-table1 <- specify_table1(data, vars = varlist)
-
-# With YAML string (recommended for readability)
-yaml_str <- "
-Patient Characteristics:
-  Demographics:
-    age: Age (years)
-    sex: Sex
-  Treatment:
-    treated: Treated
-    score:
-      var: score
-      label: Score
-      center_fun: median
-      spread_fun: IQR
-"
-table1 <- specify_table1(data, vars = yaml_str)
-
-# With YAML file
-# writeLines(yaml_str, "table1_spec.yaml")
-# table1 <- specify_table1(data, vars = "table1_spec.yaml")
 
 }

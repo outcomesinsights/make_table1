@@ -251,7 +251,10 @@ implement_table1 <- function(doc,
     
     # Convert to flextable and add to document
     ft <- table1_to_flextable(table1_result, ...)
-    doc <- officer::body_add_flextable(doc, ft)
+    if (!requireNamespace("flextable", quietly = TRUE)) {
+      stop("The 'flextable' package is required. Install with: install.packages('flextable')")
+    }
+    doc <- flextable::body_add_flextable(doc, ft)
   }
   
   return(doc)

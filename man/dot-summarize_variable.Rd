@@ -32,7 +32,7 @@
 
 \item{spread_fun}{Function for spread statistic (sd, IQR, etc.)}
 
-\item{group}{Optional grouping variable for SMD calculation}
+\item{group}{Deprecated. Not currently used (SMD functionality removed).}
 
 \item{scaling}{Scaling factor for percentages (default = 100)}
 
