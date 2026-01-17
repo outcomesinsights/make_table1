@@ -13,7 +13,8 @@
   center_fun = mean,
   spread_fun = sd,
   group = NULL,
-  scaling = 100
+  scaling = 100,
+  level_spec = NULL
 )
 }
 \arguments{
@@ -34,6 +35,8 @@
 \item{group}{Optional grouping variable for SMD calculation}
 
 \item{scaling}{Scaling factor for percentages (default = 100)}
+
+\item{level_spec}{Optional level specification for categorical variables}
 }
 \value{
 Data frame with one or more rows (for categorical variables)

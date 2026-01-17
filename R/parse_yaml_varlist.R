@@ -100,6 +100,10 @@ parse_yaml_varlist <- function(yaml_input, file = FALSE) {
         if ("spread_fun" %in% names(value)) {
           structured_var$spread_fun <- .parse_function(value$spread_fun)
         }
+        # Handle level specifications
+        if ("levels" %in% names(value)) {
+          structured_var$levels <- .parse_level_spec(value$levels)
+        }
         result[[name]] <- structured_var
       } else {
         # Nested structure (subheader) - recurse
@@ -150,4 +154,51 @@ parse_yaml_varlist <- function(yaml_input, file = FALSE) {
   }
   
   stop("Invalid function specification: ", func_name)
+}
+
+#' Parse Level Specifications from YAML
+#'
+#' Internal function to convert level specifications from YAML format.
+#' Handles conversion of function strings to actual R functions.
+#' Supports both `function(x)` and `\(x)` syntax (R 4.1.0+).
+#'
+#' @param levels_list List of level specifications from YAML
+#'
+#' @return List with functions converted from strings
+#'
+#' @keywords internal
+.parse_level_spec <- function(levels_list) {
+  if (!is.list(levels_list)) {
+    return(levels_list)
+  }
+  
+  result <- list()
+  
+  for (i in seq_along(levels_list)) {
+    level_name <- names(levels_list)[i]
+    level_value <- levels_list[[i]]
+    
+    # Check if this is a function string
+    if (is.character(level_value) && length(level_value) == 1) {
+      # Check if it's a function string - supports both function(x) and \(x) syntax
+      # Pattern matches: function(x) or \(x) at the start
+      if (grepl("^(function\\s*\\(|\\\\\\()", level_value)) {
+        # Parse and evaluate the function string
+        tryCatch({
+          func_expr <- parse(text = level_value)
+          result[[level_name]] <- eval(func_expr)
+        }, error = function(e) {
+          stop("Could not parse function string for level '", level_name, "': ", level_value, "\nError: ", e$message)
+        })
+      } else {
+        # Regular value, not a function
+        result[[level_name]] <- level_value
+      }
+    } else {
+      # Not a character string - pass through (could be numeric, etc.)
+      result[[level_name]] <- level_value
+    }
+  }
+  
+  return(result)
 }

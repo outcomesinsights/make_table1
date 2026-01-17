@@ -8,8 +8,12 @@
 #' \itemize{
 #'   \item Continuous variables: Center (Spread) - default is Mean (SD)
 #'   \item Binary variables: % (n)
-#'   \item Categorical variables: % (n) for each level
+#'   \item Categorical variables: % (n) for each level (auto-expanded or user-specified)
 #' }
+#' 
+#' For categorical variables, you can specify which levels to include and their labels
+#' using the \code{levels} parameter in nested list or YAML format. This eliminates the
+#' need to manually create derived binary variables.
 #'
 #' @param data Data frame or data table with variables of interest
 #' @param vars Character vector of variable names, a data frame with 2 columns,
@@ -29,7 +33,9 @@
 #'         var1 = "Label 1",
 #'         var2 = "Label 2",
 #'         var3 = list(var = "var3", label = "Label 3", 
-#'                    center_fun = median, spread_fun = IQR)
+#'                    center_fun = median, spread_fun = IQR),
+#'         var4 = list(var = "var4", label = "Label 4",
+#'                    levels = list("Level 1" = "value1", "Level 2" = "value2"))
 #'       ),
 #'       "Subheader 2" = list(...)
 #'     )
@@ -47,8 +53,14 @@
 #'         label: "Label 3"
 #'         center_fun: "median"
 #'         spread_fun: "IQR"
+#'       var4:
+#'         var: "var4"
+#'         label: "Label 4"
+#'         levels:
+#'           "Level 1": "value1"
+#'           "Level 2": "value2"
 #'     "Subheader 2":
-#'       var4: "Label 4"
+#'       var5: "Label 5"
 #'   }
 #'   
 #'   YAML can be provided as a string or file path. See \code{\link{parse_yaml_varlist}}
@@ -164,7 +176,7 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
   
   # Handle vars input - can be character vector, 2-column data frame, nested list, or YAML
   parsed_varlist <- NULL
-  var_overrides <- list(center_funs = list(), spread_funs = list())
+  var_overrides <- list(center_funs = list(), spread_funs = list(), levels = list())
   
   # Check if vars is a YAML string or file path
   if (is.character(vars) && length(vars) == 1 && 
@@ -187,14 +199,23 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
     var_names <- parsed_varlist$vars$var
     var_labels <- parsed_varlist$vars$label
     var_subheaders <- parsed_varlist$vars$subheader
+    # Ensure subheaders are never NA
+    var_subheaders[is.na(var_subheaders)] <- ""
     var_overrides$center_funs <- parsed_varlist$center_funs
     var_overrides$spread_funs <- parsed_varlist$spread_funs
+    var_overrides$levels <- parsed_varlist$levels
     # table_title <- parsed_varlist$title  # Reserved for future use
   } else if (is.data.frame(vars) && ncol(vars) >= 2) {
     # vars is a data frame with variable names and labels
     var_names <- vars[[1]]
     var_labels <- vars[[2]]
-    var_subheaders <- if ("subheader" %in% names(vars)) vars$subheader else rep("", length(var_names))
+    var_subheaders <- if ("subheader" %in% names(vars)) {
+      subh <- vars$subheader
+      subh[is.na(subh)] <- ""
+      subh
+    } else {
+      rep("", length(var_names))
+    }
   } else if (is.character(vars)) {
     # vars is a character vector
     var_names <- vars
@@ -228,15 +249,24 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
   
   # Process each variable
   results <- list()
-  current_subheader <- NULL
+  current_subheader <- ""
   
   for (i in seq_along(var_names)) {
     var_name <- var_names[i]
     var_label <- var_labels[i]
-    var_subheader <- if (length(var_subheaders) >= i) var_subheaders[i] else ""
+    var_subheader <- if (length(var_subheaders) >= i) {
+      subh <- var_subheaders[i]
+      if (is.na(subh) || is.null(subh)) "" else as.character(subh)
+    } else {
+      ""
+    }
     
-    # Check if we need to add a subheader row
-    if (var_subheader != "" && var_subheader != current_subheader) {
+    # Ensure both subheaders are character strings (never NA)
+    var_subheader <- if (is.na(var_subheader) || is.null(var_subheader)) "" else as.character(var_subheader)
+    current_subheader <- if (is.na(current_subheader) || is.null(current_subheader)) "" else as.character(current_subheader)
+    
+    # Check if we need to add a subheader row (use identical for safe comparison)
+    if (nchar(var_subheader) > 0 && !identical(var_subheader, current_subheader)) {
       # Add subheader row
       subheader_row <- data.frame(
         varname = var_subheader,
@@ -293,6 +323,13 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
       NULL  # Auto-detect
     }
     
+    # Get level specification if provided
+    var_level_spec <- if (var_name %in% names(var_overrides$levels)) {
+      var_overrides$levels[[var_name]]
+    } else {
+      NULL
+    }
+    
     # Summarize variable
     results[[length(results) + 1]] <- .summarize_variable(
       data = data,
@@ -303,7 +340,8 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
       center_fun = var_center_fun,
       spread_fun = var_spread_fun,
       group = group,
-      scaling = 100
+      scaling = 100,
+      level_spec = var_level_spec
     )
   }
   

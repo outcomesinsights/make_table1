@@ -35,7 +35,9 @@ Nested list format:
         var1 = "Label 1",
         var2 = "Label 2",
         var3 = list(var = "var3", label = "Label 3", 
-                   center_fun = median, spread_fun = IQR)
+                   center_fun = median, spread_fun = IQR),
+        var4 = list(var = "var4", label = "Label 4",
+                   levels = list("Level 1" = "value1", "Level 2" = "value2"))
       ),
       "Subheader 2" = list(...)
     )
@@ -53,8 +55,14 @@ YAML format (recommended for readability):
         label: "Label 3"
         center_fun: "median"
         spread_fun: "IQR"
+      var4:
+        var: "var4"
+        label: "Label 4"
+        levels:
+          "Level 1": "value1"
+          "Level 2": "value2"
     "Subheader 2":
-      var4: "Label 4"
+      var5: "Label 5"
   }
 
 YAML can be provided as a string or file path. See \code{\link{parse_yaml_varlist}}
@@ -96,8 +104,12 @@ The function automatically detects variable types and formats them appropriately
 \itemize{
 \item Continuous variables: Center (Spread) - default is Mean (SD)
 \item Binary variables: \% (n)
-\item Categorical variables: \% (n) for each level
+\item Categorical variables: \% (n) for each level (auto-expanded or user-specified)
 }
+
+For categorical variables, you can specify which levels to include and their labels
+using the \code{levels} parameter in nested list or YAML format. This eliminates the
+need to manually create derived binary variables.
 }
 \examples{
 # Create test data

@@ -97,7 +97,7 @@ make_table1_multi <- function(data, vars, subgroups = NULL,
   
   # Handle vars input - can be character vector, 2-column data frame, nested list, or YAML
   parsed_varlist <- NULL
-  var_overrides <- list(center_funs = list(), spread_funs = list())
+  var_overrides <- list(center_funs = list(), spread_funs = list(), levels = list())
   
   # Check if vars is a YAML string or file path
   if (is.character(vars) && length(vars) == 1 && 
@@ -122,6 +122,7 @@ make_table1_multi <- function(data, vars, subgroups = NULL,
     var_subheaders <- parsed_varlist$vars$subheader
     var_overrides$center_funs <- parsed_varlist$center_funs
     var_overrides$spread_funs <- parsed_varlist$spread_funs
+    var_overrides$levels <- parsed_varlist$levels
   } else if (is.data.frame(vars) && ncol(vars) >= 2) {
     # vars is a data frame with variable names and labels
     var_names <- vars[[1]]

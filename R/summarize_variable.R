@@ -12,27 +12,31 @@
 #' @param spread_fun Function for spread statistic (sd, IQR, etc.)
 #' @param group Optional grouping variable for SMD calculation
 #' @param scaling Scaling factor for percentages (default = 100)
+#' @param level_spec Optional level specification for categorical variables
 #'
 #' @return Data frame with one or more rows (for categorical variables)
 #'
 #' @keywords internal
 .summarize_variable <- function(data, variable, label = NULL, var_type = NULL,
                                 digits = 2, center_fun = mean, spread_fun = sd,
-                                group = NULL, scaling = 100) {
+                                group = NULL, scaling = 100, level_spec = NULL) {
   
   # Get label
   if (is.null(label)) {
     label <- variable
   }
   
-  # Detect type if not provided
-  if (is.null(var_type)) {
-    var_type <- .detect_type(data, variable)
-  }
-  
   # Get variable values
   x <- data[[variable]]
   n_valid <- sum(!is.na(x))
+  
+  # If level_spec is provided, treat as categorical regardless of detected type
+  if (!is.null(level_spec)) {
+    var_type <- "categorical"
+  } else if (is.null(var_type)) {
+    # Detect type if not provided and no level_spec
+    var_type <- .detect_type(data, variable)
+  }
   
   # Handle empty variables
   if (var_type == "empty" || n_valid == 0) {
@@ -54,8 +58,8 @@
     ))
   }
   
-  # Continuous variables
-  if (var_type == "continuous") {
+  # Continuous variables (but not if level_spec is provided - those are categorical)
+  if (var_type == "continuous" && is.null(level_spec)) {
     center_val <- center_fun(x, na.rm = TRUE)
     spread_val <- spread_fun(x, na.rm = TRUE)
     
@@ -109,36 +113,86 @@
   }
   
   # Categorical variables (factors with >2 levels)
-  if (var_type == "categorical") {
-    if (!is.factor(x)) {
-      x <- factor(x)
-    }
-    
-    levels_x <- levels(x)
-    n_levels <- length(levels_x)
-    
-    result_rows <- vector("list", n_levels)
-    
-    for (i in seq_along(levels_x)) {
-      level_i <- levels_x[i]
-      n_level <- sum(x == level_i, na.rm = TRUE)
-      pct <- (n_level / n_valid) * scaling
+  # OR variables with level_spec provided (should be treated as categorical)
+  if (var_type == "categorical" || !is.null(level_spec)) {
+    # If level_spec is provided, use it; otherwise auto-expand
+    if (!is.null(level_spec)) {
+      # Expand levels using specification
+      level_defs <- .expand_levels(data, variable, label, level_spec)
       
-      pct_fmt <- fmt(pct, digits = digits)
-      n_fmt <- fmt(n_level, digits = 0)
+      if (length(level_defs) == 0) {
+        # No levels to expand - treat as single variable
+        warning("No valid levels found for variable '", variable, "' with level specification")
+        return(data.frame(
+          varname = label,
+          statistic = NA_character_,
+          n = n_valid,
+          stringsAsFactors = FALSE
+        ))
+      }
       
-      # For categorical variables, create separate rows for each level
-      # Use the level name as part of the varname for clarity
-      level_label <- paste0(label, " - ", level_i)
-      result_rows[[i]] <- data.frame(
-        varname = level_label,
-        statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
-        n = n_valid,
-        stringsAsFactors = FALSE
-      )
+      result_rows <- vector("list", length(level_defs))
+      
+      for (i in seq_along(level_defs)) {
+        level_label <- names(level_defs)[i]
+        filter_fun <- level_defs[[i]]
+        
+        # Apply filter to create binary variable
+        # x is already extracted from data[[variable]], so it should be a vector
+        level_binary <- tryCatch({
+          filter_fun(x)
+        }, error = function(e) {
+          # If filter fails, try converting x to atomic first
+          x_atomic <- unlist(as.vector(x))
+          filter_fun(x_atomic)
+        })
+        n_level <- sum(level_binary, na.rm = TRUE)
+        pct <- (n_level / n_valid) * scaling
+        
+        pct_fmt <- fmt(pct, digits = digits)
+        n_fmt <- fmt(n_level, digits = 0)
+        
+        result_rows[[i]] <- data.frame(
+          varname = level_label,
+          statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
+          n = n_valid,
+          stringsAsFactors = FALSE
+        )
+      }
+      
+      return(do.call(rbind, result_rows))
+    } else {
+      # Auto-expand: use current behavior
+      if (!is.factor(x)) {
+        x <- factor(x)
+      }
+      
+      levels_x <- levels(x)
+      n_levels <- length(levels_x)
+      
+      result_rows <- vector("list", n_levels)
+      
+      for (i in seq_along(levels_x)) {
+        level_i <- levels_x[i]
+        n_level <- sum(x == level_i, na.rm = TRUE)
+        pct <- (n_level / n_valid) * scaling
+        
+        pct_fmt <- fmt(pct, digits = digits)
+        n_fmt <- fmt(n_level, digits = 0)
+        
+        # For categorical variables, create separate rows for each level
+        # Use the level name as part of the varname for clarity
+        level_label <- paste0(label, " - ", level_i)
+        result_rows[[i]] <- data.frame(
+          varname = level_label,
+          statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
+          n = n_valid,
+          stringsAsFactors = FALSE
+        )
+      }
+      
+      return(do.call(rbind, result_rows))
     }
-    
-    return(do.call(rbind, result_rows))
   }
   
   # Unknown type

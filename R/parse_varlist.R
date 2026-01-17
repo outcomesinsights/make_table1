@@ -36,6 +36,7 @@
   var_subheaders <- character()
   var_center_funs <- list()
   var_spread_funs <- list()
+  var_levels <- list()  # Store level specifications
   table_title <- NULL
   
   # Check if top level has a title (single named element at top level)
@@ -71,6 +72,10 @@
           if ("spread_fun" %in% names(item)) {
             var_spread_funs[[item$var]] <<- item$spread_fun
           }
+          # Store level specifications if provided
+          if ("levels" %in% names(item)) {
+            var_levels[[item$var]] <<- item$levels
+          }
         } else {
           # This is a subheader - recurse into it
           is_subheader <- TRUE
@@ -104,6 +109,7 @@
     vars = result_df,
     center_funs = var_center_funs,
     spread_funs = var_spread_funs,
+    levels = var_levels,
     title = table_title
   )
 }
