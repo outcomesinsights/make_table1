@@ -15,7 +15,7 @@ data <- data.frame(
 # Example 1: Simple usage
 cat("Example 1: Simple usage\n")
 cat("========================\n")
-table1_simple <- make_table1(data, vars = c("age", "sex", "treated"))
+table1_simple <- specify_table1(data, vars = c("age", "sex", "treated"))
 print(table1_simple)
 cat("\n\n")
 
@@ -26,14 +26,14 @@ varlist <- data.frame(
   var = c("age", "sex", "treated", "score"),
   label = c("Age (years)", "Sex", "Treated", "Score")
 )
-table1_labels <- make_table1(data, vars = varlist)
+table1_labels <- specify_table1(data, vars = varlist)
 print(table1_labels)
 cat("\n\n")
 
 # Example 3: With median and IQR
 cat("Example 3: With median and IQR\n")
 cat("==============================\n")
-table1_median <- make_table1(
+table1_median <- specify_table1(
   data,
   vars = c("age", "score"),
   center_fun = median,
@@ -49,7 +49,7 @@ varlist_sub <- data.frame(
   var = c("**Demographics**", "age", "sex", "**Treatment**", "treated"),
   label = c("Demographics", "Age (years)", "Sex", "Treatment", "Treated")
 )
-table1_sub <- make_table1(data, vars = varlist_sub)
+table1_sub <- specify_table1(data, vars = varlist_sub)
 print(table1_sub)
 cat("\n\n")
 
@@ -67,7 +67,7 @@ varlist_nested <- list(
     )
   )
 )
-table1_nested <- make_table1(data, vars = varlist_nested)
+table1_nested <- specify_table1(data, vars = varlist_nested)
 print(table1_nested)
 cat("\n\n")
 
@@ -85,7 +85,7 @@ varlist_override <- list(
     )
   )
 )
-table1_override <- make_table1(data, vars = varlist_override)
+table1_override <- specify_table1(data, vars = varlist_override)
 print(table1_override)
 cat("\n\n")
 
@@ -93,7 +93,7 @@ cat("\n\n")
 cat("Example 7: Multi-column table\n")
 cat("==============================\n")
 data$group <- rep(c("A", "B"), 50)
-table1_multi <- make_table1_multi(
+table1_multi <- specify_table1_multi(
   data,
   vars = c("age", "sex", "treated"),
   subgroups = list(Group = "group"),
@@ -105,7 +105,7 @@ cat("\n\n")
 # Example 8: With SMD calculation
 cat("Example 8: With SMD calculation\n")
 cat("================================\n")
-table1_smd <- make_table1(
+table1_smd <- specify_table1(
   data,
   vars = c("age", "sex", "treated"),
   group = "group"

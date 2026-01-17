@@ -11,7 +11,7 @@ test_data <- data.frame(
 )
 
 test_that("table1_to_flextable works with single-column table", {
-  table1 <- make_table1(test_data, vars = c("age", "sex", "treated"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex", "treated"))
   ft <- table1_to_flextable(table1)
   
   expect_s3_class(ft, "flextable")
@@ -21,7 +21,7 @@ test_that("table1_to_flextable works with single-column table", {
 })
 
 test_that("table1_to_flextable includes n column for single-column tables by default", {
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   ft <- table1_to_flextable(table1)
   
   # Check that n column is present
@@ -31,7 +31,7 @@ test_that("table1_to_flextable includes n column for single-column tables by def
 
 test_that("table1_to_flextable works with multi-column table", {
   test_data$group <- rep(c("A", "B"), 50)
-  table1_multi <- make_table1(
+  table1_multi <- specify_table1(
     test_data,
     vars = c("age", "sex", "treated"),
     group = "group"
@@ -47,7 +47,7 @@ test_that("table1_to_flextable works with multi-column table", {
 })
 
 test_that("table1_to_flextable formats headers with sample sizes", {
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   ft <- table1_to_flextable(table1)
   
   # Check that header contains sample size format
@@ -56,14 +56,14 @@ test_that("table1_to_flextable formats headers with sample sizes", {
 })
 
 test_that("table1_to_flextable handles custom header_n_format", {
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   ft <- table1_to_flextable(table1, header_n_format = "\\n(n={n})")
   
   expect_s3_class(ft, "flextable")
 })
 
 test_that("table1_to_flextable handles show_n_column parameter", {
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   
   # With n column
   ft_with_n <- table1_to_flextable(table1, show_n_column = TRUE)
@@ -82,7 +82,7 @@ test_that("table1_to_flextable handles subheaders", {
     var = c("**Demographics**", "age", "sex"),
     label = c("Demographics", "Age (years)", "Sex")
   )
-  table1 <- make_table1(test_data, vars = varlist)
+  table1 <- specify_table1(test_data, vars = varlist)
   ft <- table1_to_flextable(table1)
   
   expect_s3_class(ft, "flextable")
@@ -90,7 +90,7 @@ test_that("table1_to_flextable handles subheaders", {
 })
 
 test_that("table1_to_flextable handles factor indentation", {
-  table1 <- make_table1(test_data, vars = c("race"))
+  table1 <- specify_table1(test_data, vars = c("race"))
   ft <- table1_to_flextable(table1)
   
   expect_s3_class(ft, "flextable")
@@ -102,7 +102,7 @@ test_that("table1_to_flextable handles multi-column with varying n values", {
   test_data$group <- rep(c("A", "B"), 50)
   test_data$age[test_data$group == "A"][1:5] <- NA  # 5 missing in group A
   
-  table1_multi <- make_table1(
+  table1_multi <- specify_table1(
     test_data,
     vars = c("age", "sex"),
     group = "group"
@@ -122,7 +122,7 @@ test_that("table1_to_flextable validates input", {
 test_that("table1_to_flextable handles empty subgroups", {
   test_data$group <- rep(c("A", "B"), 50)
   
-  table1_multi <- make_table1(
+  table1_multi <- specify_table1(
     test_data,
     vars = c("age", "sex"),
     subgroups = list(
@@ -139,7 +139,7 @@ test_that("table1_to_flextable handles empty subgroups", {
 
 test_that("table1_to_flextable works with custom cell_n_format", {
   test_data$group <- rep(c("A", "B"), 50)
-  table1_multi <- make_table1(
+  table1_multi <- specify_table1(
     test_data,
     vars = c("age", "sex"),
     group = "group"
@@ -151,7 +151,7 @@ test_that("table1_to_flextable works with custom cell_n_format", {
 })
 
 test_that("table1_to_flextable handles indent_width parameter", {
-  table1 <- make_table1(test_data, vars = c("race"))
+  table1 <- specify_table1(test_data, vars = c("race"))
   ft <- table1_to_flextable(table1, indent_width = 4)
   
   expect_s3_class(ft, "flextable")

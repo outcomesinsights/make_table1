@@ -47,7 +47,7 @@ data <- data.frame(
 )
 
 # Simple usage
-table1 <- make_table1(data, vars = c("age", "sex", "treated", "score"))
+table1 <- specify_table1(data, vars = c("age", "sex", "treated", "score"))
 print(table1)
 
 # With custom labels
@@ -55,7 +55,7 @@ varlist <- data.frame(
   var = c("age", "sex", "treated"),
   label = c("Age (years)", "Sex", "Treated")
 )
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 
 # With YAML (recommended for complex tables)
 yaml_str <- "
@@ -71,7 +71,7 @@ Patient Characteristics:
       center_fun: median
       spread_fun: IQR
 "
-table1 <- make_table1(data, vars = yaml_str)
+table1 <- specify_table1(data, vars = yaml_str)
 ```
 
 ## Documentation
@@ -83,8 +83,8 @@ table1 <- make_table1(data, vars = yaml_str)
 
 ## Main Functions
 
-- `make_table1()` - Create Table 1 with optional SMD calculation
-- `make_table1_multi()` - Create multi-column Table 1 for multiple subgroups
+- `specify_table1()` - Create Table 1 with optional SMD calculation
+- `specify_table1_multi()` - Create multi-column Table 1 for multiple subgroups
 - `fmt()` - Format numeric values with rounding and thousand separators
 - `parse_yaml_varlist()` - Parse YAML specification for variables
 

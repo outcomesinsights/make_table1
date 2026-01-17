@@ -20,8 +20,8 @@ The package has been completely refactored to follow best practices, minimize de
   - More robust binary detection (handles 0/1, TRUE/FALSE, two-level factors)
 
 ### 3. Unified API ✅
-- **Before**: Separate functions `make_table1()` and `make_table1_smd()`
-- **After**: Single `make_table1()` function with optional `group` parameter
+- **Before**: Separate functions `specify_table1()` and `specify_table1_smd()`
+- **After**: Single `specify_table1()` function with optional `group` parameter
 - **Benefits**:
   - Simpler API - one function to learn
   - Consistent interface
@@ -35,7 +35,7 @@ The package has been completely refactored to follow best practices, minimize de
   - Any custom function that takes a vector and returns a single value
 - **Example**:
   ```r
-  make_table1(data, vars = c("age", "score"), 
+  specify_table1(data, vars = c("age", "score"), 
               center_fun = median, spread_fun = IQR)
   ```
 
@@ -51,7 +51,7 @@ The package has been completely refactored to follow best practices, minimize de
   - `fmt.R` - Number formatting
   - `detect_type.R` - Type detection
   - `summarize_variable.R` - Core summarization logic (handles both grouped and ungrouped)
-  - `make_table1.R` - Main user-facing function
+  - `specify_table1.R` - Main user-facing function
   - `table1-package.R` - Package documentation
 
 ### 7. Better API Design ✅
@@ -67,18 +67,18 @@ The package has been completely refactored to follow best practices, minimize de
 ### Old Code:
 ```r
 # Old way - separate functions
-table1 <- make_table1(varlist, dt, digits = 2)
-table1_smd <- make_table1_smd(varlist, dt, digits = 2, g = "group")
+table1 <- specify_table1(varlist, dt, digits = 2)
+table1_smd <- specify_table1_smd(varlist, dt, digits = 2, g = "group")
 ```
 
 ### New Code:
 ```r
 # New way - unified function
-table1 <- make_table1(data, vars = varlist, digits = 2)
-table1_smd <- make_table1(data, vars = varlist, digits = 2, group = "group")
+table1 <- specify_table1(data, vars = varlist, digits = 2)
+table1_smd <- specify_table1(data, vars = varlist, digits = 2, group = "group")
 
 # With custom summary functions
-table1_median <- make_table1(data, vars = c("age", "score"),
+table1_median <- specify_table1(data, vars = c("age", "score"),
                             center_fun = median, spread_fun = IQR)
 ```
 
@@ -89,7 +89,7 @@ R/
 ├── fmt.R                    # Number formatting (improved)
 ├── detect_type.R            # Type detection (new, improved)
 ├── summarize_variable.R     # Core summarization (new, unified)
-├── make_table1.R            # Main function (refactored)
+├── specify_table1.R            # Main function (refactored)
 └── table1-package.R         # Package docs (updated)
 ```
 

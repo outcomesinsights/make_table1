@@ -22,7 +22,7 @@
 - [ ] Handle edge cases: zero variance, all same value in one group
 - [ ] What if group variable has more than 2 levels? (currently errors)
 
-### 4. Multi-Column Tables (`make_table1_multi.R`)
+### 4. Multi-Column Tables (`specify_table1_multi.R`)
 - [ ] Alignment logic - ensure it works with categorical variables that have different numbers of levels
 - [ ] Empty subgroup handling - test all three options
 - [ ] Grouping variable closure issue - verify it works correctly

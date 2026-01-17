@@ -17,10 +17,10 @@
 #'
 #' @section Main functions:
 #' \describe{
-#'   \item{\code{\link{make_table1}}}{Create Table 1 (supports both single and multi-column tables)}
+#'   \item{\code{\link{specify_table1}}}{Create Table 1 (supports both single and multi-column tables)}
 #'   \item{\code{\link{table1_to_flextable}}}{Convert Table 1 to flextable for Word export}
 #'   \item{\code{\link{table1_word_doc}}}{Create or load Word document for Table 1 reports}
-#'   \item{\code{\link{add_table1}}}{Add Table 1 to Word document with optional caption}
+#'   \item{\code{\link{implement_table1}}}{Add Table 1 to Word document with optional caption}
 #'   \item{\code{\link{add_section_heading}}}{Add section heading to Word document}
 #'   \item{\code{\link{add_page_break}}}{Add page break to Word document}
 #'   \item{\code{\link{set_orientation}}}{Set page orientation (portrait/landscape)}

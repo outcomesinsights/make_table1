@@ -2,7 +2,7 @@
 
 ## Overview
 
-The `make_table1_multi()` function creates multi-column Table 1 summaries that combine statistics from multiple subgroups. This is useful for comparing characteristics across different groups or subsets of your data.
+The `specify_table1_multi()` function creates multi-column Table 1 summaries that combine statistics from multiple subgroups. This is useful for comparing characteristics across different groups or subsets of your data.
 
 ## Key Features
 
@@ -26,7 +26,7 @@ data <- data.frame(
 )
 
 # Multi-column table by grouping variable
-table1_multi <- make_table1_multi(
+table1_multi <- specify_table1_multi(
   data,
   vars = c("age", "sex", "treated"),
   subgroups = list(Group = "group"),
@@ -40,7 +40,7 @@ This creates a table with columns for "All", "Group: A", "Group: B", "Group: C",
 
 ```r
 # Multi-column table with custom filters
-table1_multi <- make_table1_multi(
+table1_multi <- specify_table1_multi(
   data,
   vars = c("age", "sex", "treated"),
   subgroups = list(
@@ -58,7 +58,7 @@ Note that "Treated" and "Male" can overlap - the function handles this correctly
 ### Example 3: Combining Grouping Variable and Custom Filters
 
 ```r
-table1_multi <- make_table1_multi(
+table1_multi <- specify_table1_multi(
   data,
   vars = c("age", "sex", "treated"),
   subgroups = list(
@@ -74,7 +74,7 @@ table1_multi <- make_table1_multi(
 
 ```r
 # Some subgroups might have 0 observations
-table1_multi <- make_table1_multi(
+table1_multi <- specify_table1_multi(
   data,
   vars = c("age", "sex", "treated"),
   subgroups = list(
@@ -158,7 +158,7 @@ The original code in `table1_by_line.R`:
 3. Combined columns using `do.call(cbind, subtables)`
 4. Required manual handling of empty subgroups
 
-The new `make_table1_multi()` function:
+The new `specify_table1_multi()` function:
 - Automates the entire process
 - Handles empty subgroups gracefully
 - Ensures proper alignment automatically

@@ -35,7 +35,7 @@
 **Fix**: Improve detection logic
 
 ### 7. Empty Subgroup Handling in Multi-Column
-**Location**: `R/make_table1_multi.R`
+**Location**: `R/specify_table1_multi.R`
 **Issue**: When creating empty structures, we copy reference table which might modify original
 **Fix**: Use proper copying (avoid reference issues)
 

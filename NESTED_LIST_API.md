@@ -47,7 +47,7 @@ varlist <- list(
   )
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ### Example 2: With Variable-Level Function Overrides
@@ -75,7 +75,7 @@ varlist <- list(
   )
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ### Example 3: Mixed Simple and Structured Variables
@@ -99,7 +99,7 @@ varlist <- list(
   )
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ### Example 4: Without Table Title
@@ -117,7 +117,7 @@ varlist <- list(
   )
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ### Example 5: Complex Real-World Example
@@ -152,7 +152,7 @@ varlist <- list(
   )
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ## Variable-Level Overrides

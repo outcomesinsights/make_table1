@@ -12,10 +12,10 @@ parse_yaml_varlist(yaml_input, file = FALSE)
 \item{file}{Logical, if TRUE treats yaml_input as a file path (default = FALSE)}
 }
 \value{
-Nested list structure compatible with make_table1
+Nested list structure compatible with specify_table1
 }
 \description{
-Parses a YAML string or file into the nested list structure used by make_table1.
+Parses a YAML string or file into the nested list structure used by specify_table1.
 Makes it easier for users to specify variables, labels, subheaders, and function overrides.
 }
 \examples{
@@ -30,7 +30,7 @@ Patient Characteristics:
     treated: Treated
 "
 varlist <- parse_yaml_varlist(yaml_str)
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 
 # YAML file
 varlist <- parse_yaml_varlist("table1_spec.yaml", file = TRUE)

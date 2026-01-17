@@ -52,7 +52,7 @@ test_that("add_section_heading accepts different styles", {
   expect_s3_class(doc, "rdocx")
 })
 
-test_that("add_table1 adds table to document", {
+test_that("implement_table1 adds table to document", {
   skip_if_not_installed("officer")
   skip_if_not_installed("flextable")
   
@@ -62,15 +62,15 @@ test_that("add_table1 adds table to document", {
     sex = c("M", "F", "M", "F")
   )
   
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   
   doc <- table1_word_doc() |>
-    add_table1(table1)
+    implement_table1(table1)
   
   expect_s3_class(doc, "rdocx")
 })
 
-test_that("add_table1 adds caption when provided", {
+test_that("implement_table1 adds caption when provided", {
   skip_if_not_installed("officer")
   skip_if_not_installed("flextable")
   
@@ -79,15 +79,15 @@ test_that("add_table1 adds caption when provided", {
     sex = c("M", "F", "M", "F")
   )
   
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   
   doc <- table1_word_doc() |>
-    add_table1(table1, caption = "Table 1: Test")
+    implement_table1(table1, caption = "Table 1: Test")
   
   expect_s3_class(doc, "rdocx")
 })
 
-test_that("add_table1 passes formatting options to table1_to_flextable", {
+test_that("implement_table1 passes formatting options to table1_to_flextable", {
   skip_if_not_installed("officer")
   skip_if_not_installed("flextable")
   
@@ -96,10 +96,10 @@ test_that("add_table1 passes formatting options to table1_to_flextable", {
     sex = c("M", "F", "M", "F")
   )
   
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   
   doc <- table1_word_doc() |>
-    add_table1(
+    implement_table1(
       table1,
       caption = "Table 1",
       multiline_header = TRUE,
@@ -171,10 +171,10 @@ test_that("builder functions validate document object", {
   skip_if_not_installed("officer")
   
   test_data <- data.frame(age = c(30, 40), sex = c("M", "F"))
-  table1 <- make_table1(test_data, vars = c("age", "sex"))
+  table1 <- specify_table1(test_data, vars = c("age", "sex"))
   
   expect_error(add_section_heading("not a doc", "Test"), "must be an officer document")
-  expect_error(add_table1("not a doc", table1), "must be an officer document")
+  expect_error(implement_table1("not a doc", table1), "must be an officer document")
   expect_error(add_page_break("not a doc"), "must be an officer document")
   expect_error(set_orientation("not a doc", "portrait"), "must be an officer document")
   expect_error(save_table1_doc("not a doc", "file.docx"), "must be an officer document")
@@ -190,18 +190,18 @@ test_that("integration test: build complete document", {
     group = c("A", "A", "B", "B")
   )
   
-  table1_single <- make_table1(test_data, vars = c("age", "sex"))
-  table1_multi <- make_table1(test_data, vars = c("age", "sex"), group = "group")
+  table1_single <- specify_table1(test_data, vars = c("age", "sex"))
+  table1_multi <- specify_table1(test_data, vars = c("age", "sex"), group = "group")
   
   temp_file <- tempfile(fileext = ".docx")
   
   doc <- table1_word_doc() |>
     add_section_heading("Section 1: Single Column Table") |>
-    add_table1(table1_single, caption = "Table 1: Single Column") |>
+    implement_table1(table1_single, caption = "Table 1: Single Column") |>
     add_page_break() |>
     set_orientation("portrait") |>
     add_section_heading("Section 2: Multi Column Table") |>
-    add_table1(
+    implement_table1(
       table1_multi,
       caption = "Table 2: Multi Column",
       multiline_header = TRUE,

@@ -10,10 +10,10 @@
 \item{yaml_list}{The parsed YAML structure}
 }
 \value{
-Nested list in the format expected by make_table1
+Nested list in the format expected by specify_table1
 }
 \description{
-Internal function to convert YAML-parsed structure to the format expected by make_table1.
+Internal function to convert YAML-parsed structure to the format expected by specify_table1.
 Handles conversion of variable specifications (simple strings vs structured lists).
 }
 \keyword{internal}

@@ -16,7 +16,7 @@ data <- data.frame(
 
 # Example 1: Auto-expand (current behavior - no level specification)
 # This will create one row per level automatically
-table1_auto <- make_table1(
+table1_auto <- specify_table1(
   data,
   vars = c("age_group", "sex", "treated")
 )
@@ -42,7 +42,7 @@ varlist_levels <- list(
   )
 )
 
-table1_specified <- make_table1(data, vars = varlist_levels)
+table1_specified <- specify_table1(data, vars = varlist_levels)
 print(table1_specified)
 
 # Example 3: Using YAML format (more readable)
@@ -61,7 +61,7 @@ Patient Characteristics:
   treated: Treated
 "
 
-table1_yaml <- make_table1(data, vars = yaml_spec)
+table1_yaml <- specify_table1(data, vars = yaml_spec)
 print(table1_yaml)
 
 # Example 4: Using character vector to specify level names
@@ -77,7 +77,7 @@ varlist_names <- list(
   )
 )
 
-table1_names <- make_table1(data, vars = varlist_names)
+table1_names <- specify_table1(data, vars = varlist_names)
 print(table1_names)
 
 # Example 5: Using custom filter functions for complex logic
@@ -98,5 +98,5 @@ varlist_functions <- list(
   )
 )
 
-table1_functions <- make_table1(data, vars = varlist_functions)
+table1_functions <- specify_table1(data, vars = varlist_functions)
 print(table1_functions)

@@ -61,7 +61,7 @@ load_all()  # Uses current directory
 library(table1)
 
 # Check that it's working
-?make_table1
+?specify_table1
 ```
 
 ## Optional Dependencies
@@ -106,6 +106,6 @@ data <- data.frame(
 )
 
 # Create Table 1
-table1 <- make_table1(data, vars = c("age", "sex", "treated"))
+table1 <- specify_table1(data, vars = c("age", "sex", "treated"))
 print(table1)
 ```

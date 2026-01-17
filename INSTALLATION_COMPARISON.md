@@ -13,7 +13,7 @@ library(table1)
 ✅ **Permanent installation** - Package is installed in your R library and persists across R sessions  
 ✅ **Available everywhere** - Can use `library(table1)` from any R session or script  
 ✅ **Standard R package** - Behaves like any other installed package  
-✅ **Documentation accessible** - Can use `?make_table1` to view help pages  
+✅ **Documentation accessible** - Can use `?specify_table1` to view help pages  
 ✅ **Works in R Markdown** - Can be used in R Markdown documents and Shiny apps  
 ✅ **Version control** - R tracks the installed version  
 ✅ **Can share** - Others can install the same way if they have the source  

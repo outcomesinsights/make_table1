@@ -1,10 +1,10 @@
 #' Convert Table 1 to flextable for Word Export
 #'
-#' Converts the output from \code{\link{make_table1}} into a formatted
+#' Converts the output from \code{\link{specify_table1}} into a formatted
 #' \code{flextable} object suitable for Word export. Handles sample sizes
 #' in headers and per-cell n values when they differ from column headers.
 #'
-#' @param table1_result Output from \code{\link{make_table1}}
+#' @param table1_result Output from \code{\link{specify_table1}}
 #' @param show_n_column Logical, whether to show n column for single-column tables.
 #'   If NULL (default), automatically set to TRUE for single-column, FALSE for multi-column.
 #' @param header_n_format Character string format for sample size in headers.
@@ -63,11 +63,11 @@
 #' @examples
 #' \dontrun{
 #' # Single-column table
-#' table1 <- make_table1(data, vars = c("age", "sex"))
+#' table1 <- specify_table1(data, vars = c("age", "sex"))
 #' ft <- table1_to_flextable(table1)
 #' 
 #' # Multi-column table with multi-line headers and custom formatting
-#' table1_multi <- make_table1(data, vars = c("age", "sex"), group = "group")
+#' table1_multi <- specify_table1(data, vars = c("age", "sex"), group = "group")
 #' ft <- table1_to_flextable(
 #'   table1_multi,
 #'   multiline_header = TRUE,
@@ -80,7 +80,7 @@
 #' # Export to Word using document builder
 #' library(table1)
 #' doc <- table1_word_doc() |>
-#'   add_table1(table1_multi, caption = "Table 1: Characteristics")
+#'   implement_table1(table1_multi, caption = "Table 1: Characteristics")
 #' save_table1_doc(doc, "table1.docx")
 #' }
 #'
@@ -110,7 +110,7 @@ table1_to_flextable <- function(table1_result,
   
   # Validate input
   if (!is.data.frame(table1_result)) {
-    stop("'table1_result' must be a data frame from make_table1()")
+    stop("'table1_result' must be a data frame from specify_table1()")
   }
   
   if (!"varname" %in% names(table1_result)) {

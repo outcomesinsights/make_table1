@@ -83,14 +83,14 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #' instead of using \code{table1_result}.
 #'
 #' @param doc An \code{officer} document object.
-#' @param table1_result Output from \code{\link{make_table1}}. Ignored if
+#' @param table1_result Output from \code{\link{specify_table1}}. Ignored if
 #'   \code{data}, \code{vars}, and \code{subgroups} are provided.
 #' @param caption Character string, optional table caption. For individual
 #'   tables, this is used as a prefix with subgroup name appended.
 #' @param caption_style Character string, style for the caption. Default: "caption".
 #' @param data Data frame containing the data. If provided along with \code{vars}
 #'   and \code{subgroups}, individual tables are created for each subgroup.
-#' @param vars Variable specification (as used in \code{\link{make_table1}}).
+#' @param vars Variable specification (as used in \code{\link{specify_table1}}).
 #' @param subgroups Named list of filter functions for creating individual tables.
 #' @param section_prefix Character string prefix for section headings when
 #'   creating individual tables. Default: "Tables for".
@@ -119,13 +119,13 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #' @examples
 #' \dontrun{
 #' # Single table
-#' table1 <- make_table1(data, vars = c("age", "sex"))
+#' table1 <- specify_table1(data, vars = c("age", "sex"))
 #' doc <- table1_word_doc() |>
-#'   add_table1(table1, caption = "Table 1: Patient Characteristics")
+#'   implement_table1(table1, caption = "Table 1: Patient Characteristics")
 #'
 #' # Individual tables for each subgroup (automatic)
 #' doc <- table1_word_doc() |>
-#'   add_table1(
+#'   implement_table1(
 #'     data = dt_prep,
 #'     vars = varlist,
 #'     subgroups = list(
@@ -137,7 +137,7 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #' }
 #'
 #' @export
-add_table1 <- function(doc,
+implement_table1 <- function(doc,
                       table1_result = NULL,
                       caption = NULL,
                       caption_style = "caption",
@@ -203,7 +203,7 @@ add_table1 <- function(doc,
       dti <- data[filter_mask, , drop = FALSE]
       
       # Create table for this subgroup
-      table1_single <- make_table1(
+      table1_single <- specify_table1(
         data = dti,
         vars = vars,
         digits = digits
@@ -230,7 +230,7 @@ add_table1 <- function(doc,
       # Add to document
       doc <- doc |>
         add_section_heading(sectcap, style = section_style, pos = table_pos) |>
-        add_table1(table1_single, caption = tab1cap, caption_style = caption_style, ...)
+        implement_table1(table1_single, caption = tab1cap, caption_style = caption_style, ...)
       
       # Add page break if requested (but not after the last table)
       if (add_page_breaks && i < length(subgroup_names)) {
@@ -268,9 +268,9 @@ add_table1 <- function(doc,
 #' @examples
 #' \dontrun{
 #' doc <- table1_word_doc() |>
-#'   add_table1(table1_1, caption = "Table 1") |>
+#'   implement_table1(table1_1, caption = "Table 1") |>
 #'   add_page_break() |>
-#'   add_table1(table1_2, caption = "Table 2")
+#'   implement_table1(table1_2, caption = "Table 2")
 #' }
 #'
 #' @export
@@ -308,9 +308,9 @@ add_page_break <- function(doc) {
 #' @examples
 #' \dontrun{
 #' doc <- table1_word_doc() |>
-#'   add_table1(table1_portrait, caption = "Table 1 (Portrait)") |>
+#'   implement_table1(table1_portrait, caption = "Table 1 (Portrait)") |>
 #'   set_orientation("landscape") |>
-#'   add_table1(table1_landscape, caption = "Table 2 (Landscape)")
+#'   implement_table1(table1_landscape, caption = "Table 2 (Landscape)")
 #' }
 #'
 #' @export
@@ -351,7 +351,7 @@ set_orientation <- function(doc, orientation = c("portrait", "landscape"), type 
 #' @examples
 #' \dontrun{
 #' doc <- table1_word_doc() |>
-#'   add_table1(table1, caption = "Table 1")
+#'   implement_table1(table1, caption = "Table 1")
 #' save_table1_doc(doc, "output/table1.docx")
 #' }
 #'

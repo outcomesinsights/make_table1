@@ -68,7 +68,7 @@ Variables:
   
   result <- parse_yaml_varlist(yaml_str)
   
-  # The result should be compatible with make_table1
+  # The result should be compatible with specify_table1
   expect_true(is.list(result))
 })
 

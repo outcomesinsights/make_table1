@@ -41,7 +41,7 @@ data <- data.frame(
 )
 
 # Create Table 1
-table1 <- make_table1(data, vars = c("age", "sex", "treated"))
+table1 <- specify_table1(data, vars = c("age", "sex", "treated"))
 print(table1)
 ```
 
@@ -61,7 +61,7 @@ Patient Characteristics:
 Then use it:
 
 ```r
-table1 <- make_table1(data, vars = "table1_spec.yaml")
+table1 <- specify_table1(data, vars = "table1_spec.yaml")
 ```
 
 ## Multi-Column Tables
@@ -69,7 +69,7 @@ table1 <- make_table1(data, vars = "table1_spec.yaml")
 ```r
 data$group <- rep(c("A", "B"), 50)
 
-table1_multi <- make_table1_multi(
+table1_multi <- specify_table1_multi(
   data,
   vars = c("age", "sex", "treated"),
   subgroups = list(Group = "group"),
@@ -82,4 +82,4 @@ table1_multi <- make_table1_multi(
 - See [YAML_EXAMPLES.md](YAML_EXAMPLES.md) for YAML syntax
 - See [VARIABLE_SPECIFICATION.md](VARIABLE_SPECIFICATION.md) for all input methods
 - See [MULTI_COLUMN_TABLES.md](MULTI_COLUMN_TABLES.md) for multi-column tables
-- Run `?make_table1` for full documentation
+- Run `?specify_table1` for full documentation

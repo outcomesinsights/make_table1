@@ -9,7 +9,7 @@ There are several ways to specify which variables to include in Table 1 and how 
 The simplest approach - just list the variable names:
 
 ```r
-table1 <- make_table1(data, vars = c("age", "sex", "treated", "score"))
+table1 <- specify_table1(data, vars = c("age", "sex", "treated", "score"))
 ```
 
 Labels will be the same as variable names.
@@ -19,7 +19,7 @@ Labels will be the same as variable names.
 Provide labels using a named vector:
 
 ```r
-table1 <- make_table1(
+table1 <- specify_table1(
   data,
   vars = c("age", "sex", "treated", "score"),
   labels = c(
@@ -41,7 +41,7 @@ varlist <- data.frame(
   label = c("Age (years)", "Sex", "Treated", "Score")
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ## Method 4: With Subheaders
@@ -70,7 +70,7 @@ varlist <- data.frame(
   )
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 The subheader rows will appear in the table with the label text and no statistics.
@@ -96,7 +96,7 @@ varlist <- data.frame(
   label = names(t1)
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 Note: Variables that are all NA will be detected as subheaders automatically.
@@ -119,7 +119,7 @@ data <- data.frame(
   treated = rep(c(TRUE, FALSE), 50)
 )
 
-table1 <- make_table1(data, vars = c("age", "sex", "treated"))
+table1 <- specify_table1(data, vars = c("age", "sex", "treated"))
 ```
 
 ### Example 2: With Custom Labels
@@ -130,7 +130,7 @@ varlist <- data.frame(
   label = c("Age (years)", "Sex", "Treated")
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ### Example 3: With Subheaders
@@ -153,7 +153,7 @@ varlist <- data.frame(
   )
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```
 
 ### Example 4: Complex Structure (Matching Original)
@@ -178,5 +178,5 @@ varlist <- data.frame(
   label = names(t1)
 )
 
-table1 <- make_table1(data, vars = varlist)
+table1 <- specify_table1(data, vars = varlist)
 ```

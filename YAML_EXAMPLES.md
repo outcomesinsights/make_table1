@@ -39,7 +39,7 @@ Patient Characteristics:
     treated: Treated
 "
 
-table1 <- make_table1(data, vars = yaml_str)
+table1 <- specify_table1(data, vars = yaml_str)
 ```
 
 ### Example 2: With Variable-Level Function Overrides
@@ -76,7 +76,7 @@ Patient Characteristics:
       spread_fun: IQR
 "
 
-table1 <- make_table1(data, vars = yaml_str)
+table1 <- specify_table1(data, vars = yaml_str)
 ```
 
 ### Example 3: Using YAML File
@@ -108,7 +108,7 @@ Baseline Characteristics:
 
 **Usage:**
 ```r
-table1 <- make_table1(data, vars = "table1_spec.yaml")
+table1 <- specify_table1(data, vars = "table1_spec.yaml")
 ```
 
 ### Example 4: Complex Real-World Example
@@ -185,7 +185,7 @@ Patient Characteristics:
   Demographics:
     age: Age (years)
 "
-table1 <- make_table1(data, vars = yaml_str)
+table1 <- specify_table1(data, vars = yaml_str)
 ```
 
 ### YAML File (Recommended for Complex Tables)
@@ -194,7 +194,7 @@ table1 <- make_table1(data, vars = yaml_str)
 writeLines(yaml_str, "table1_spec.yaml")
 
 # Use file
-table1 <- make_table1(data, vars = "table1_spec.yaml")
+table1 <- specify_table1(data, vars = "table1_spec.yaml")
 ```
 
 ## Benefits of YAML

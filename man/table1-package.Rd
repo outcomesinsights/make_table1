@@ -22,8 +22,8 @@ The package has zero dependencies (uses only base R) and provides:
 \section{Main functions}{
 
 \describe{
-\item{\code{\link{make_table1}}}{Create Table 1 with optional SMD calculation}
-\item{\code{\link{make_table1_multi}}}{Create multi-column Table 1 for multiple subgroups}
+\item{\code{\link{specify_table1}}}{Create Table 1 with optional SMD calculation}
+\item{\code{\link{implement_table1}}}{Add Table 1 to Word document with optional caption}
 \item{\code{\link{fmt}}}{Format numeric values with rounding and thousand separators}
 }
 }

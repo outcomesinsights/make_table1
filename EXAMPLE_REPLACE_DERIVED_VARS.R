@@ -88,12 +88,12 @@ Patient Characteristics:
 "
 
 # Usage:
-# table1_result <- make_table1(data = dt_prep, vars = varlist_new)
+# table1_result <- specify_table1(data = dt_prep, vars = varlist_new)
 # OR
-# table1_result <- make_table1(data = dt_prep, vars = yaml_spec)
+# table1_result <- specify_table1(data = dt_prep, vars = yaml_spec)
 
-# For make_table1_multi, it works the same way:
-# table1_multi_result <- make_table1_multi(
+# For specify_table1_multi, it works the same way:
+# table1_multi_result <- specify_table1_multi(
 #   data = dt_prep,
 #   vars = varlist_new,  # or yaml_spec
 #   subgroups = subgroup_filters,

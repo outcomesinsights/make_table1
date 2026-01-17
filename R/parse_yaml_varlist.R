@@ -1,12 +1,12 @@
 #' Parse YAML Variable List Specification
 #'
-#' Parses a YAML string or file into the nested list structure used by make_table1.
+#' Parses a YAML string or file into the nested list structure used by specify_table1.
 #' Makes it easier for users to specify variables, labels, subheaders, and function overrides.
 #'
 #' @param yaml_input Character string with YAML content, or path to a YAML file
 #' @param file Logical, if TRUE treats yaml_input as a file path (default = FALSE)
 #'
-#' @return Nested list structure compatible with make_table1
+#' @return Nested list structure compatible with specify_table1
 #'
 #' @examples
 #' \dontrun{
@@ -20,7 +20,7 @@
 #'     treated: Treated
 #' "
 #' varlist <- parse_yaml_varlist(yaml_str)
-#' table1 <- make_table1(data, vars = varlist)
+#' table1 <- specify_table1(data, vars = varlist)
 #'
 #' # YAML file
 #' varlist <- parse_yaml_varlist("table1_spec.yaml", file = TRUE)
@@ -53,12 +53,12 @@ parse_yaml_varlist <- function(yaml_input, file = FALSE) {
 
 #' Convert YAML Structure to Variable List Format
 #'
-#' Internal function to convert YAML-parsed structure to the format expected by make_table1.
+#' Internal function to convert YAML-parsed structure to the format expected by specify_table1.
 #' Handles conversion of variable specifications (simple strings vs structured lists).
 #'
 #' @param yaml_list The parsed YAML structure
 #'
-#' @return Nested list in the format expected by make_table1
+#' @return Nested list in the format expected by specify_table1
 #'
 #' @keywords internal
 .convert_yaml_to_varlist <- function(yaml_list) {

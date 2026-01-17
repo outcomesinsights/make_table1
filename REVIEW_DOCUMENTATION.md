@@ -14,8 +14,8 @@ library(table1)
 help(package = "table1")
 
 # View specific function documentation
-?make_table1
-?make_table1_multi
+?specify_table1
+?specify_table1_multi
 ?fmt
 ?parse_yaml_varlist
 
@@ -33,12 +33,12 @@ source("/Users/mark/Documents/rprojects/package_development/table1/VIEW_DOCUMENT
 
 ### Main Functions
 
-1. **`make_table1()`** - Main function for creating Table 1
-   - Access: `?make_table1`
+1. **`specify_table1()`** - Main function for creating Table 1
+   - Access: `?specify_table1`
    - Includes examples, parameter descriptions, return values
 
-2. **`make_table1_multi()`** - Multi-column tables
-   - Access: `?make_table1_multi`
+2. **`specify_table1_multi()`** - Multi-column tables
+   - Access: `?specify_table1_multi`
    - Documentation for subgroup specifications
 
 3. **`fmt()`** - Number formatting
@@ -57,7 +57,7 @@ source("/Users/mark/Documents/rprojects/package_development/table1/VIEW_DOCUMENT
 
 ## Viewing in RStudio
 
-1. **Help Pane** - Type `?make_table1` in console, help appears in Help pane
+1. **Help Pane** - Type `?specify_table1` in console, help appears in Help pane
 2. **F1 Key** - Place cursor on function name and press F1
 3. **Help Tab** - Click Help tab, search for "table1"
 
@@ -70,8 +70,8 @@ source("/Users/mark/Documents/rprojects/package_development/table1/VIEW_DOCUMENT
 ## Documentation Files
 
 The documentation is also available as `.Rd` files in the `man/` directory:
-- `man/make_table1.Rd`
-- `man/make_table1_multi.Rd`
+- `man/specify_table1.Rd`
+- `man/specify_table1_multi.Rd`
 - `man/fmt.Rd`
 - `man/parse_yaml_varlist.Rd`
 - `man/table1-package.Rd`
@@ -82,7 +82,7 @@ The documentation is also available as `.Rd` files in the `man/` directory:
 library(table1)
 
 # Test that help works
-?make_table1
+?specify_table1
 
 # Test package overview
 help(package = "table1")
@@ -110,7 +110,7 @@ install("/Users/mark/Documents/rprojects/package_development/table1")
 library(table1)
 
 # View help
-?make_table1
+?specify_table1
 
 # Try the function
 data <- data.frame(
@@ -119,6 +119,6 @@ data <- data.frame(
   treated = rep(c(TRUE, FALSE), 50)
 )
 
-table1 <- make_table1(data, vars = c("age", "sex", "treated"))
+table1 <- specify_table1(data, vars = c("age", "sex", "treated"))
 print(table1)
 ```

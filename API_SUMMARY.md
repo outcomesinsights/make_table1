@@ -32,10 +32,10 @@ Subheaders are rows in the table that group related variables. They are created 
 
 ## Current API
 
-### `make_table1()`
+### `specify_table1()`
 
 ```r
-make_table1(
+specify_table1(
   data,                    # Data frame
   vars,                    # Variable names or 2-col data frame
   labels = NULL,           # Optional labels
@@ -47,10 +47,10 @@ make_table1(
 )
 ```
 
-### `make_table1_multi()`
+### `specify_table1_multi()`
 
 ```r
-make_table1_multi(
+specify_table1_multi(
   data,                    # Data frame
   vars,                    # Variable names or 2-col data frame
   subgroups = NULL,        # Subgroup definitions

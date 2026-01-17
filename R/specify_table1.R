@@ -120,7 +120,7 @@
 #' )
 #'
 #' # Simple usage with variable names (single column)
-#' table1 <- make_table1(data, vars = c("age", "sex", "treated", "score"))
+#' table1 <- specify_table1(data, vars = c("age", "sex", "treated", "score"))
 #' print(table1)
 #'
 #' # With custom labels
@@ -128,18 +128,18 @@
 #'   var = c("age", "sex", "treated", "score"),
 #'   label = c("Age (years)", "Sex", "Treated", "Score")
 #' )
-#' table1 <- make_table1(data, vars = varlist)
+#' table1 <- specify_table1(data, vars = varlist)
 #'
 #' # Multi-column table by grouping variable
 #' data$group <- rep(c("A", "B"), 50)
-#' table1_multi <- make_table1(
+#' table1_multi <- specify_table1(
 #'   data,
 #'   vars = c("age", "sex", "treated"),
 #'   group = "group"
 #' )
 #'
 #' # Multi-column table with custom subgroups
-#' table1_multi <- make_table1(
+#' table1_multi <- specify_table1(
 #'   data,
 #'   vars = c("age", "sex", "treated"),
 #'   subgroups = list(
@@ -151,11 +151,11 @@
 #'
 #' # Factor variables automatically create subheader + indented levels
 #' data$race <- factor(rep(c("White", "Black", "Asian"), c(30, 20, 50)))
-#' table1_factor <- make_table1(data, vars = c("age", "race"))
+#' table1_factor <- specify_table1(data, vars = c("age", "race"))
 #' # Output: "race" as subheader, then "  White", "  Black", "  Asian" as indented rows
 #'
 #' @export
-make_table1 <- function(data, vars, labels = NULL, digits = 2,
+specify_table1 <- function(data, vars, labels = NULL, digits = 2,
                        center_fun = mean, spread_fun = sd,
                        group = NULL, subgroups = NULL,
                        include_all = NULL, all_label = "All",
