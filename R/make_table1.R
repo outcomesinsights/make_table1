@@ -14,6 +14,11 @@
 #' For categorical variables, you can specify which levels to include and their labels
 #' using the \code{levels} parameter in nested list or YAML format. This eliminates the
 #' need to manually create derived binary variables.
+#' 
+#' For factor variables specified without a \code{levels} specification, the function
+#' automatically creates a subheader row with the variable label, followed by indented
+#' rows for each factor level (indented with 2 spaces). This provides a clear hierarchical
+#' structure in the table output.
 #'
 #' @param data Data frame or data table with variables of interest
 #' @param vars Character vector of variable names, a data frame with 2 columns,
@@ -120,6 +125,11 @@
 #'   vars = c("age", "sex", "treated"),
 #'   group = "group"
 #' )
+#'
+#' # Factor variables automatically create subheader + indented levels
+#' data$race <- factor(rep(c("White", "Black", "Asian"), c(30, 20, 50)))
+#' table1_factor <- make_table1(data, vars = c("age", "race"))
+#' # Output: "race" as subheader, then "  White", "  Black", "  Asian" as indented rows
 #'
 #' # With subheaders to group variables (data frame method)
 #' varlist <- data.frame(

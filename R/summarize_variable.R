@@ -163,35 +163,80 @@
       return(do.call(rbind, result_rows))
     } else {
       # Auto-expand: use current behavior
-      if (!is.factor(x)) {
+      # Check if variable is already a factor (before converting)
+      is_factor_var <- is.factor(x)
+      
+      if (!is_factor_var) {
         x <- factor(x)
       }
       
       levels_x <- levels(x)
       n_levels <- length(levels_x)
       
-      result_rows <- vector("list", n_levels)
-      
-      for (i in seq_along(levels_x)) {
-        level_i <- levels_x[i]
-        n_level <- sum(x == level_i, na.rm = TRUE)
-        pct <- (n_level / n_valid) * scaling
-        
-        pct_fmt <- fmt(pct, digits = digits)
-        n_fmt <- fmt(n_level, digits = 0)
-        
-        # For categorical variables, create separate rows for each level
-        # Use the level name as part of the varname for clarity
-        level_label <- paste0(label, " - ", level_i)
-        result_rows[[i]] <- data.frame(
-          varname = level_label,
-          statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
-          n = n_valid,
+      # For factor variables, create subheader + indented levels
+      if (is_factor_var) {
+        # Create subheader row with variable label
+        subheader_row <- data.frame(
+          varname = label,
+          statistic = NA_character_,
+          n = NA_integer_,
           stringsAsFactors = FALSE
         )
+        # Add group columns if needed
+        if (!is.null(group)) {
+          subheader_row$group1_stat <- NA_character_
+          subheader_row$group2_stat <- NA_character_
+          subheader_row$smd <- NA_character_
+        }
+        
+        # Create indented level rows
+        level_rows <- vector("list", n_levels)
+        
+        for (i in seq_along(levels_x)) {
+          level_i <- levels_x[i]
+          n_level <- sum(x == level_i, na.rm = TRUE)
+          pct <- (n_level / n_valid) * scaling
+          
+          pct_fmt <- fmt(pct, digits = digits)
+          n_fmt <- fmt(n_level, digits = 0)
+          
+          # Indent level names with 2 spaces
+          level_label <- paste0("  ", level_i)
+          level_rows[[i]] <- data.frame(
+            varname = level_label,
+            statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
+            n = n_valid,
+            stringsAsFactors = FALSE
+          )
+        }
+        
+        # Combine subheader + level rows
+        return(rbind(subheader_row, do.call(rbind, level_rows)))
+      } else {
+        # Non-factor categorical (character): use existing behavior
+        # Create separate rows for each level with "Label - Level" format
+        result_rows <- vector("list", n_levels)
+        
+        for (i in seq_along(levels_x)) {
+          level_i <- levels_x[i]
+          n_level <- sum(x == level_i, na.rm = TRUE)
+          pct <- (n_level / n_valid) * scaling
+          
+          pct_fmt <- fmt(pct, digits = digits)
+          n_fmt <- fmt(n_level, digits = 0)
+          
+          # For non-factor categorical variables, use "Label - Level" format
+          level_label <- paste0(label, " - ", level_i)
+          result_rows[[i]] <- data.frame(
+            varname = level_label,
+            statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
+            n = n_valid,
+            stringsAsFactors = FALSE
+          )
+        }
+        
+        return(do.call(rbind, result_rows))
       }
-      
-      return(do.call(rbind, result_rows))
     }
   }
   
