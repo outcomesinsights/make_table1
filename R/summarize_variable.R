@@ -10,7 +10,7 @@
 #' @param digits Number of digits for rounding
 #' @param center_fun Function for center statistic (mean, median, etc.)
 #' @param spread_fun Function for spread statistic (sd, IQR, etc.)
-#' @param group Optional grouping variable for SMD calculation
+#' @param group Deprecated. Not currently used (SMD functionality removed).
 #' @param scaling Scaling factor for percentages (default = 100)
 #' @param level_spec Optional level specification for categorical variables
 #'
@@ -48,15 +48,12 @@
     ))
   }
   
-  # Handle grouping (SMD calculation)
-  if (!is.null(group)) {
-    return(.summarize_variable_grouped(
-      data = data, variable = variable, label = label,
-      var_type = var_type, digits = digits,
-      center_fun = center_fun, spread_fun = spread_fun,
-      group = group, scaling = scaling
-    ))
-  }
+  # TODO: Re-implement SMD calculation in future version
+  # SMD functionality has been temporarily removed to simplify the API
+  # The group parameter is now used to create multi-column tables instead
+  # if (!is.null(group)) {
+  #   return(.summarize_variable_grouped(...))
+  # }
   
   # Continuous variables (but not if level_spec is provided - those are categorical)
   if (var_type == "continuous" && is.null(level_spec)) {
@@ -182,12 +179,6 @@
           n = NA_integer_,
           stringsAsFactors = FALSE
         )
-        # Add group columns if needed
-        if (!is.null(group)) {
-          subheader_row$group1_stat <- NA_character_
-          subheader_row$group2_stat <- NA_character_
-          subheader_row$smd <- NA_character_
-        }
         
         # Create indented level rows
         level_rows <- vector("list", n_levels)
@@ -201,7 +192,9 @@
           n_fmt <- fmt(n_level, digits = 0)
           
           # Indent level names with 2 spaces
-          level_label <- paste0("  ", level_i)
+          # Use non-breaking spaces (\u00A0) to ensure they display properly in Word/flextable
+          # Regular spaces may be trimmed by some formatters
+          level_label <- paste0("\u00A0\u00A0", level_i)
           level_rows[[i]] <- data.frame(
             varname = level_label,
             statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
@@ -263,6 +256,9 @@
 #' Summarize Variable with Grouping (for SMD)
 #'
 #' Internal function to summarize a variable by group and calculate SMD.
+#' 
+#' TODO: This function is currently not used. SMD functionality has been
+#' temporarily removed. Re-implement in future version if needed.
 #'
 #' @inheritParams .summarize_variable
 #'

@@ -20,6 +20,10 @@
 #' rows for each factor level (indented with 2 spaces). This provides a clear hierarchical
 #' structure in the table output.
 #'
+#' The function supports both single-column and multi-column tables. Use the \code{group}
+#' parameter to create columns from a factor variable, or \code{subgroups} to define
+#' custom columns (including non-mutually exclusive subsets).
+#'
 #' @param data Data frame or data table with variables of interest
 #' @param vars Character vector of variable names, a data frame with 2 columns,
 #'   a nested list structure, or a YAML string/file:
@@ -77,18 +81,34 @@
 #'   Other options: `median`, or custom function.
 #' @param spread_fun Function for spread statistic of continuous variables (default = `sd`).
 #'   Other options: `IQR` (for interquartile range), or custom function.
-#' @param group Optional character string name of grouping variable for calculating
-#'   standardized mean differences (SMD) between two groups.
+#' @param group Optional character string name of grouping variable. Creates columns
+#'   for each level of the factor variable.
+#' @param subgroups Optional named list defining custom subgroups/columns. Each element can be:
+#'   \itemize{
+#'     \item A character string naming a grouping variable (for mutually exclusive groups)
+#'     \item A function that filters the data (returns logical vector)
+#'     \item A list with 'filter' (function) and optional 'label' (character)
+#'   }
+#' @param include_all Logical, whether to include a column for all observations
+#'   (default = TRUE if no group or subgroups specified, FALSE otherwise)
+#' @param all_label Label for the "all" column (default = "All")
 #' @param var_types Optional named character vector to override automatic type detection.
 #'   Values should be "continuous", "binary", or "categorical".
+#' @param empty_subgroup_handling How to handle empty subgroups:
+#'   \itemize{
+#'     \item "na" - Return NA for statistics (default)
+#'     \item "zero" - Return "0" or "0 (0)" for statistics
+#'     \item "skip" - Skip empty subgroups (not recommended for column alignment)
+#'   }
 #'
 #' @return Returns Table 1 as a data frame with columns:
 #'   \itemize{
 #'     \item varname: Variable name/label
-#'     \item statistic: Formatted statistic (Mean (SD) or % (n))
-#'     \item n: Sample size
-#'     \item (if group specified): group1_stat, group2_stat, smd
+#'     \item One or more columns containing statistics (one per subgroup/group level)
+#'     \item n: Sample size (for first column)
 #'   }
+#'   If multiple columns are created, the result includes an attribute "sample_sizes"
+#'   with sample sizes for each column.
 #'
 #' @examples
 #' # Create test data
@@ -99,7 +119,7 @@
 #'   score = runif(100, 0, 100)
 #' )
 #'
-#' # Simple usage with variable names
+#' # Simple usage with variable names (single column)
 #' table1 <- make_table1(data, vars = c("age", "sex", "treated", "score"))
 #' print(table1)
 #'
@@ -110,20 +130,23 @@
 #' )
 #' table1 <- make_table1(data, vars = varlist)
 #'
-#' # With median and IQR instead of mean and SD
-#' table1 <- make_table1(
-#'   data, 
-#'   vars = c("age", "score"),
-#'   center_fun = median,
-#'   spread_fun = IQR
-#' )
-#'
-#' # With grouping for SMD calculation
+#' # Multi-column table by grouping variable
 #' data$group <- rep(c("A", "B"), 50)
-#' table1_smd <- make_table1(
+#' table1_multi <- make_table1(
 #'   data,
 #'   vars = c("age", "sex", "treated"),
 #'   group = "group"
+#' )
+#'
+#' # Multi-column table with custom subgroups
+#' table1_multi <- make_table1(
+#'   data,
+#'   vars = c("age", "sex", "treated"),
+#'   subgroups = list(
+#'     "Treated" = function(d) d$treated == TRUE,
+#'     "Untreated" = function(d) d$treated == FALSE
+#'   ),
+#'   include_all = TRUE
 #' )
 #'
 #' # Factor variables automatically create subheader + indented levels
@@ -131,60 +154,36 @@
 #' table1_factor <- make_table1(data, vars = c("age", "race"))
 #' # Output: "race" as subheader, then "  White", "  Black", "  Asian" as indented rows
 #'
-#' # With subheaders to group variables (data frame method)
-#' varlist <- data.frame(
-#'   var = c("**Demographics**", "age", "sex", "**Treatment**", "treated"),
-#'   label = c("**Demographics**", "Age (years)", "Sex", "**Treatment**", "Treated")
-#' )
-#' table1 <- make_table1(data, vars = varlist)
-#'
-#' # With nested list structure (recommended for complex tables)
-#' varlist <- list(
-#'   "Patient Characteristics" = list(
-#'     "Demographics" = list(
-#'       age = "Age (years)",
-#'       sex = "Sex"
-#'     ),
-#'     "Treatment" = list(
-#'       treated = "Treated",
-#'       score = list(var = "score", label = "Score", 
-#'                   center_fun = median, spread_fun = IQR)
-#'     )
-#'   )
-#' )
-#' table1 <- make_table1(data, vars = varlist)
-#'
-#' # With YAML string (recommended for readability)
-#' yaml_str <- "
-#' Patient Characteristics:
-#'   Demographics:
-#'     age: Age (years)
-#'     sex: Sex
-#'   Treatment:
-#'     treated: Treated
-#'     score:
-#'       var: score
-#'       label: Score
-#'       center_fun: median
-#'       spread_fun: IQR
-#' "
-#' table1 <- make_table1(data, vars = yaml_str)
-#'
-#' # With YAML file
-#' # writeLines(yaml_str, "table1_spec.yaml")
-#' # table1 <- make_table1(data, vars = "table1_spec.yaml")
-#'
 #' @export
 make_table1 <- function(data, vars, labels = NULL, digits = 2,
                        center_fun = mean, spread_fun = sd,
-                       group = NULL, var_types = NULL) {
+                       group = NULL, subgroups = NULL,
+                       include_all = NULL, all_label = "All",
+                       var_types = NULL,
+                       empty_subgroup_handling = c("na", "zero", "skip")) {
   
   # Validate inputs
   if (!is.data.frame(data)) {
     stop("'data' must be a data frame")
   }
   
-  # Handle vars input - can be character vector, 2-column data frame, nested list, or YAML
+  empty_subgroup_handling <- match.arg(empty_subgroup_handling)
+  
+  # Determine if we need multi-column table
+  has_group <- !is.null(group)
+  has_subgroups <- !is.null(subgroups) && length(subgroups) > 0
+  
+  # Set default for include_all
+  if (is.null(include_all)) {
+    include_all <- !has_group && !has_subgroups
+  }
+  
+  # If no grouping specified and include_all is FALSE, default to single column
+  if (!has_group && !has_subgroups && !include_all) {
+    include_all <- TRUE
+  }
+  
+  # Parse vars input - can be character vector, 2-column data frame, nested list, or YAML
   parsed_varlist <- NULL
   var_overrides <- list(center_funs = list(), spread_funs = list(), levels = list())
   
@@ -214,7 +213,6 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
     var_overrides$center_funs <- parsed_varlist$center_funs
     var_overrides$spread_funs <- parsed_varlist$spread_funs
     var_overrides$levels <- parsed_varlist$levels
-    # table_title <- parsed_varlist$title  # Reserved for future use
   } else if (is.data.frame(vars) && ncol(vars) >= 2) {
     # vars is a data frame with variable names and labels
     var_names <- vars[[1]]
@@ -250,12 +248,60 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
     stop("'vars' must be a character vector, a 2-column data frame, or a nested list")
   }
   
-  # Check for missing variables - these might be subheaders
-  missing_vars <- var_names[!var_names %in% names(data)]
-  if (length(missing_vars) > 0) {
-    # Check if these are intended as subheaders (will be handled below)
-    # If not, we'll error when we try to process them
+  # If we have group or subgroups, create multi-column table
+  if (has_group || has_subgroups || (include_all && (has_group || has_subgroups))) {
+    # Convert group to subgroups format if needed
+    if (has_group) {
+      if (!group %in% names(data)) {
+        stop("Grouping variable '", group, "' not found in data")
+      }
+      # Create subgroups list from group variable
+      if (is.null(subgroups)) {
+        subgroups <- list()
+      }
+      # Add group as a subgroup definition
+      subgroups[[group]] <- group
+    }
+    
+    # Process subgroups and create multi-column table
+    return(.create_multi_column_table1(
+      data = data,
+      var_names = var_names,
+      var_labels = var_labels,
+      var_subheaders = var_subheaders,
+      parsed_varlist = parsed_varlist,
+      var_overrides = var_overrides,
+      subgroups = subgroups,
+      include_all = include_all,
+      all_label = all_label,
+      digits = digits,
+      center_fun = center_fun,
+      spread_fun = spread_fun,
+      var_types = var_types,
+      empty_subgroup_handling = empty_subgroup_handling
+    ))
+  } else {
+    # Single column table - use core function
+    return(.create_table1_core(
+      data = data,
+      var_names = var_names,
+      var_labels = var_labels,
+      var_subheaders = var_subheaders,
+      var_overrides = var_overrides,
+      digits = digits,
+      center_fun = center_fun,
+      spread_fun = spread_fun,
+      var_types = var_types
+    ))
   }
+}
+
+#' Internal function to create a single-column Table 1
+#'
+#' @keywords internal
+.create_table1_core <- function(data, var_names, var_labels, var_subheaders,
+                                var_overrides, digits, center_fun, spread_fun,
+                                var_types) {
   
   # Process each variable
   results <- list()
@@ -284,12 +330,6 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
         n = NA_integer_,
         stringsAsFactors = FALSE
       )
-      # Add group columns if needed
-      if (!is.null(group)) {
-        subheader_row$group1_stat <- NA_character_
-        subheader_row$group2_stat <- NA_character_
-        subheader_row$smd <- NA_character_
-      }
       results[[length(results) + 1]] <- subheader_row
       current_subheader <- var_subheader
     }
@@ -303,12 +343,6 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
         n = NA_integer_,
         stringsAsFactors = FALSE
       )
-      # Add group columns if needed
-      if (!is.null(group)) {
-        subheader_row$group1_stat <- NA_character_
-        subheader_row$group2_stat <- NA_character_
-        subheader_row$smd <- NA_character_
-      }
       results[[length(results) + 1]] <- subheader_row
       next
     }
@@ -340,7 +374,8 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
       NULL
     }
     
-    # Summarize variable
+    # Summarize variable (no group parameter - SMD removed for now)
+    # TODO: Re-implement SMD calculation in future version
     results[[length(results) + 1]] <- .summarize_variable(
       data = data,
       variable = var_name,
@@ -349,7 +384,7 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
       digits = digits,
       center_fun = var_center_fun,
       spread_fun = var_spread_fun,
-      group = group,
+      group = NULL,  # SMD removed
       scaling = 100,
       level_spec = var_level_spec
     )
@@ -360,4 +395,246 @@ make_table1 <- function(data, vars, labels = NULL, digits = 2,
   rownames(result_df) <- NULL
   
   return(result_df)
+}
+
+#' Internal function to create a multi-column Table 1
+#'
+#' @keywords internal
+.create_multi_column_table1 <- function(data, var_names, var_labels, var_subheaders,
+                                        parsed_varlist, var_overrides, subgroups,
+                                        include_all, all_label, digits, center_fun,
+                                        spread_fun, var_types, empty_subgroup_handling) {
+  
+  # Process subgroups
+  subgroup_list <- list()
+  subgroup_names <- character()
+  
+  # Add "all" column if requested
+  if (include_all) {
+    subgroup_list[["all"]] <- list(
+      filter = function(d) rep(TRUE, nrow(d)),
+      label = all_label
+    )
+    subgroup_names <- c(subgroup_names, all_label)
+  }
+  
+  # Process provided subgroups
+  if (!is.null(subgroups) && length(subgroups) > 0) {
+    for (i in seq_along(subgroups)) {
+      sub_name <- names(subgroups)[i]
+      if (is.null(sub_name) || sub_name == "") {
+        sub_name <- paste0("Subgroup_", i)
+      }
+      
+      sub_def <- subgroups[[i]]
+      
+      # Handle different subgroup definition types
+      if (is.character(sub_def) && length(sub_def) == 1) {
+        # Grouping variable
+        if (!sub_def %in% names(data)) {
+          warning("Grouping variable '", sub_def, "' not found, skipping")
+          next
+        }
+        
+        group_var <- data[[sub_def]]
+        group_levels <- unique(group_var[!is.na(group_var)])
+        
+        # Create a filter for each level
+        # Use local() to properly capture loop variables
+        for (level in group_levels) {
+          level_label <- if (is.factor(level)) as.character(level) else level
+          full_label <- paste(sub_name, level_label, sep = ": ")
+          
+          # Create closure with captured values using local()
+          filter_fun <- local({
+            gv_name <- sub_def
+            lv_value <- level
+            function(d) {
+              d[[gv_name]] == lv_value & !is.na(d[[gv_name]])
+            }
+          })
+          
+          subgroup_list[[paste0(sub_name, "_", level_label)]] <- list(
+            filter = filter_fun,
+            label = full_label
+          )
+          subgroup_names <- c(subgroup_names, full_label)
+        }
+      } else if (is.function(sub_def)) {
+        # Filter function
+        subgroup_list[[sub_name]] <- list(
+          filter = sub_def,
+          label = sub_name
+        )
+        subgroup_names <- c(subgroup_names, sub_name)
+      } else if (is.list(sub_def)) {
+        # List with filter and optional label
+        if (!"filter" %in% names(sub_def)) {
+          stop("Subgroup definition must include 'filter' function")
+        }
+        sub_label <- if ("label" %in% names(sub_def)) {
+          sub_def$label
+        } else {
+          sub_name
+        }
+        
+        subgroup_list[[sub_name]] <- list(
+          filter = sub_def$filter,
+          label = sub_label
+        )
+        subgroup_names <- c(subgroup_names, sub_label)
+      } else {
+        warning("Unknown subgroup definition type for '", sub_name, "', skipping")
+        next
+      }
+    }
+  }
+  
+  # If no subgroups defined and include_all is FALSE, error
+  if (length(subgroup_list) == 0) {
+    stop("No subgroups defined. Provide 'subgroups' or set 'include_all = TRUE'")
+  }
+  
+  # Create table for each subgroup
+  subgroup_tables <- vector("list", length(subgroup_list))
+  subgroup_ns <- integer(length(subgroup_list))
+  
+  for (i in seq_along(subgroup_list)) {
+    sub_def <- subgroup_list[[i]]
+    sub_label <- sub_def$label
+    
+    # Apply filter
+    sub_filter <- tryCatch(
+      sub_def$filter(data),
+      error = function(e) {
+        warning("Error applying filter for '", sub_label, "': ", e$message)
+        return(rep(FALSE, nrow(data)))
+      }
+    )
+    
+    if (!is.logical(sub_filter) || length(sub_filter) != nrow(data)) {
+      warning("Filter for '", sub_label, "' did not return logical vector of correct length, skipping")
+      subgroup_tables[[i]] <- NULL
+      subgroup_ns[i] <- 0L
+      next
+    }
+    
+    # Subset data
+    sub_data <- data[sub_filter, , drop = FALSE]
+    subgroup_ns[i] <- nrow(sub_data)
+    
+    # Handle empty subgroups
+    if (nrow(sub_data) == 0) {
+      if (empty_subgroup_handling == "skip") {
+        subgroup_tables[[i]] <- NULL
+        next
+      }
+      # Create placeholder - will be properly structured during alignment
+      subgroup_tables[[i]] <- NULL
+    } else {
+      # Create table for this subgroup using core function
+      if (!is.null(parsed_varlist)) {
+        # Use nested list format if that's what was provided
+        sub_table <- .create_table1_core(
+          data = sub_data,
+          var_names = var_names,
+          var_labels = var_labels,
+          var_subheaders = var_subheaders,
+          var_overrides = var_overrides,
+          digits = digits,
+          center_fun = center_fun,
+          spread_fun = spread_fun,
+          var_types = var_types
+        )
+      } else {
+        # Use data frame or character format
+        sub_table <- .create_table1_core(
+          data = sub_data,
+          var_names = var_names,
+          var_labels = var_labels,
+          var_subheaders = var_subheaders,
+          var_overrides = var_overrides,
+          digits = digits,
+          center_fun = center_fun,
+          spread_fun = spread_fun,
+          var_types = var_types
+        )
+      }
+      
+      # Handle empty subgroup statistics
+      if (empty_subgroup_handling == "zero") {
+        sub_table$statistic[is.na(sub_table$statistic)] <- "0"
+        sub_table$statistic[sub_table$n == 0] <- "0 (0)"
+      }
+      
+      subgroup_tables[[i]] <- sub_table
+    }
+  }
+  
+  # Remove skipped subgroups
+  if (empty_subgroup_handling == "skip") {
+    keep_idx <- !sapply(subgroup_tables, is.null)
+    subgroup_tables <- subgroup_tables[keep_idx]
+    subgroup_names <- subgroup_names[keep_idx]
+    subgroup_ns <- subgroup_ns[keep_idx]
+  }
+  
+  # Find reference table (first non-empty table)
+  ref_idx <- which(!sapply(subgroup_tables, is.null))[1]
+  if (is.na(ref_idx)) {
+    stop("No non-empty subgroups found")
+  }
+  
+  # Create empty structures for NULL tables based on reference
+  ref_table <- subgroup_tables[[ref_idx]]
+  for (i in seq_along(subgroup_tables)) {
+    if (is.null(subgroup_tables[[i]])) {
+      # Create empty structure matching reference
+      empty_table <- ref_table
+      empty_table$statistic <- if (empty_subgroup_handling == "zero") {
+        "0 (0)"
+      } else {
+        NA_character_
+      }
+      empty_table$n <- 0L
+      subgroup_tables[[i]] <- empty_table
+    }
+  }
+  
+  # Align all tables to have same structure
+  aligned_tables <- .align_tables(subgroup_tables, reference_table = ref_idx)
+  
+  # Combine tables
+  if (length(aligned_tables) == 0) {
+    stop("No valid subgroups to combine")
+  }
+  
+  # Start with first table (includes varname, statistic, n)
+  result <- aligned_tables[[1]]
+  
+  # Rename statistic column to subgroup name
+  names(result)[names(result) == "statistic"] <- subgroup_names[1]
+  
+  # Store n column for first subgroup (for per-cell n tracking)
+  # Keep it as n_<subgroup_name> for consistency with other subgroups
+  names(result)[names(result) == "n"] <- paste0("n_", subgroup_names[1])
+  
+  # Add remaining subgroups as additional columns
+  if (length(aligned_tables) > 1) {
+    for (i in 2:length(aligned_tables)) {
+      sub_table <- aligned_tables[[i]]
+      sub_name <- subgroup_names[i]
+      
+      # Add statistic column
+      result[[sub_name]] <- sub_table$statistic
+      
+      # Add n column for per-cell n tracking (preserved for flextable formatting)
+      result[[paste0("n_", sub_name)]] <- sub_table$n
+    }
+  }
+  
+  # Add attribute with sample sizes (column-level totals)
+  attr(result, "sample_sizes") <- setNames(subgroup_ns, subgroup_names)
+  
+  return(result)
 }

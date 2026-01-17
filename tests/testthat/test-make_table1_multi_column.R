@@ -6,8 +6,22 @@ test_data <- data.frame(
   group = rep(c("A", "B", "C", "D"), 50)
 )
 
-test_that("make_table1_multi works with grouping variable", {
-  result <- make_table1_multi(
+test_that("make_table1 works with grouping variable", {
+  result <- make_table1(
+    test_data,
+    vars = c("age", "sex", "treated"),
+    group = "group",
+    include_all = TRUE
+  )
+  
+  expect_s3_class(result, "data.frame")
+  # Should have columns for All and each group level
+  expect_true("All" %in% names(result))
+  expect_true(ncol(result) > 4)  # varname, All, and group columns
+})
+
+test_that("make_table1 works with subgroups parameter", {
+  result <- make_table1(
     test_data,
     vars = c("age", "sex", "treated"),
     subgroups = list(Group = "group"),
@@ -15,13 +29,12 @@ test_that("make_table1_multi works with grouping variable", {
   )
   
   expect_s3_class(result, "data.frame")
-  # Should have columns for All and each group level
   expect_true("All" %in% names(result))
-  expect_true(ncol(result) > 4)  # varname, level, All, and group columns
+  expect_true(ncol(result) > 4)
 })
 
-test_that("make_table1_multi works with custom filters", {
-  result <- make_table1_multi(
+test_that("make_table1 works with custom filters", {
+  result <- make_table1(
     test_data,
     vars = c("age", "sex"),
     subgroups = list(
@@ -37,8 +50,8 @@ test_that("make_table1_multi works with custom filters", {
   expect_true("Untreated" %in% names(result))
 })
 
-test_that("make_table1_multi handles empty subgroups", {
-  result <- make_table1_multi(
+test_that("make_table1 handles empty subgroups", {
+  result <- make_table1(
     test_data,
     vars = c("age", "sex"),
     subgroups = list(
@@ -52,9 +65,9 @@ test_that("make_table1_multi handles empty subgroups", {
   # Should still have structure even with empty subgroup
 })
 
-test_that("make_table1_multi handles empty_subgroup_handling options", {
+test_that("make_table1 handles empty_subgroup_handling options", {
   # Test "zero" option
-  result_zero <- make_table1_multi(
+  result_zero <- make_table1(
     test_data,
     vars = c("age"),
     subgroups = list(
@@ -66,7 +79,7 @@ test_that("make_table1_multi handles empty_subgroup_handling options", {
   expect_s3_class(result_zero, "data.frame")
   
   # Test "skip" option
-  result_skip <- make_table1_multi(
+  result_skip <- make_table1(
     test_data,
     vars = c("age"),
     subgroups = list(
@@ -80,8 +93,8 @@ test_that("make_table1_multi handles empty_subgroup_handling options", {
   expect_false("Group Z" %in% names(result_skip))
 })
 
-test_that("make_table1_multi works without include_all", {
-  result <- make_table1_multi(
+test_that("make_table1 works without include_all", {
+  result <- make_table1(
     test_data,
     vars = c("age", "sex"),
     subgroups = list(
@@ -95,8 +108,8 @@ test_that("make_table1_multi works without include_all", {
   expect_true("Treated" %in% names(result))
 })
 
-test_that("make_table1_multi aligns tables correctly", {
-  result <- make_table1_multi(
+test_that("make_table1 aligns tables correctly", {
+  result <- make_table1(
     test_data,
     vars = c("age", "sex", "treated"),
     subgroups = list(
@@ -109,16 +122,16 @@ test_that("make_table1_multi aligns tables correctly", {
   # All columns should have same number of rows
   n_rows <- nrow(result)
   for (col in names(result)) {
-    if (col != "varname" && col != "level") {
+    if (col != "varname") {
       expect_equal(length(result[[col]]), n_rows)
     }
   }
 })
 
-test_that("make_table1_multi validates input", {
-  expect_error(make_table1_multi("not a data frame", vars = c("age")))
+test_that("make_table1 validates input for multi-column tables", {
+  expect_error(make_table1("not a data frame", vars = c("age")))
   expect_error(
-    make_table1_multi(
+    make_table1(
       test_data,
       vars = c("age"),
       subgroups = NULL,

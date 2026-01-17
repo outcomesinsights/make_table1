@@ -180,15 +180,25 @@ parse_yaml_varlist <- function(yaml_input, file = FALSE) {
     
     # Check if this is a function string
     if (is.character(level_value) && length(level_value) == 1) {
+      # Strip leading/trailing quotes (including escaped quotes) that YAML might add
+      # This handles cases where YAML returns values like "\"function(x)...\"" or '"function(x)..."'
+      level_value_clean <- level_value
+      # Remove escaped quotes at start/end: \" or \'
+      level_value_clean <- gsub("^\\\\[\"']|\\\\[\"']$", "", level_value_clean)
+      # Remove regular quotes at start/end
+      level_value_clean <- gsub("^[\"']+|[\"']+$", "", level_value_clean)
+      # Remove any trailing backslashes (from incomplete escaped quotes)
+      level_value_clean <- gsub("\\\\+$", "", level_value_clean)
+      
       # Check if it's a function string - supports both function(x) and \(x) syntax
       # Pattern matches: function(x) or \(x) at the start
-      if (grepl("^(function\\s*\\(|\\\\\\()", level_value)) {
+      if (grepl("^(function\\s*\\(|\\\\\\()", level_value_clean)) {
         # Parse and evaluate the function string
         tryCatch({
-          func_expr <- parse(text = level_value)
+          func_expr <- parse(text = level_value_clean)
           result[[level_name]] <- eval(func_expr)
         }, error = function(e) {
-          stop("Could not parse function string for level '", level_name, "': ", level_value, "\nError: ", e$message)
+          stop("Could not parse function string for level '", level_name, "': ", level_value_clean, "\nError: ", e$message)
         })
       } else {
         # Regular value, not a function
