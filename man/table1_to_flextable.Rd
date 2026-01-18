@@ -15,7 +15,7 @@ table1_to_flextable(
   footer_text = NULL,
   table_width = 1,
   table_layout = "autofit",
-  theme = "vanilla",
+  theme = "table1",
   format_line_fontsize = 9,
   merge_variable_header = NULL,
   bold_header = TRUE,
@@ -44,6 +44,9 @@ they differ from header. Use \code{{n}} as placeholder. Default: \code{", n={n}"
 \item{multiline_header}{Logical, whether to create multi-line headers with format
 description. If TRUE, creates 3-line header: (1) Variable/Group name, (2) N = sample size,
 (3) Format description. Default: FALSE.}
+
+\item{format_description}{Character string for format description line in multi-line headers.
+Default: \code{"\% (N) or Mean (SD)"}.}
 
 \item{footer_text}{Character string to add as footer row. If NULL (default), no footer is added.}
 
