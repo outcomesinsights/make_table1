@@ -21,6 +21,7 @@ table1_to_flextable(
   bold_header = TRUE,
   bold_variable_column = FALSE,
   bold_subheaders = TRUE,
+  subheader_bg_color = "#F0F0F0",
   ...
 )
 }
@@ -50,8 +51,8 @@ description. If TRUE, creates 3-line header: (1) Variable/Group name, (2) N = sa
 
 \item{table_layout}{Character, table layout. Options: "autofit" (default), "fixed", "auto".}
 
-\item{theme}{Character, flextable theme. Options: "vanilla" (default), "booktabs", "alafoli", etc.
-Set to NULL to skip theme application.}
+\item{theme}{Character, flextable theme. Options: "table1" (custom theme optimized for Table 1),
+"vanilla" (default), "booktabs", "alafoli", etc. Set to NULL to skip theme application.}
 
 \item{format_line_fontsize}{Numeric, font size for format description line (line 3) in
 multi-line headers. Default: 9.}
@@ -66,6 +67,10 @@ Default: FALSE.}
 
 \item{bold_subheaders}{Logical, whether to bold subheader rows (rows with NA statistics).
 Default: TRUE.}
+
+\item{subheader_bg_color}{Character string, background color for subheader rows.
+Can be a hex color (e.g., "#F0F0F0") or color name. Default: "#F0F0F0" (light gray).
+Set to NULL or "transparent" to remove background color.}
 
 \item{...}{Additional arguments passed to \code{flextable::flextable()}}
 }

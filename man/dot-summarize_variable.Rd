@@ -14,7 +14,9 @@
   spread_fun = sd,
   group = NULL,
   scaling = 100,
-  level_spec = NULL
+  level_spec = NULL,
+  center_fun_name = NULL,
+  spread_fun_name = NULL
 )
 }
 \arguments{

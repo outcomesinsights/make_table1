@@ -22,8 +22,8 @@
 #' @param footer_text Character string to add as footer row. If NULL (default), no footer is added.
 #' @param table_width Numeric, table width as proportion of page (0-1). Default: 1.0.
 #' @param table_layout Character, table layout. Options: "autofit" (default), "fixed", "auto".
-#' @param theme Character, flextable theme. Options: "vanilla" (default), "booktabs", "alafoli", etc.
-#'   Set to NULL to skip theme application.
+#' @param theme Character, flextable theme. Options: "table1" (default, custom theme optimized for Table 1),
+#'   "vanilla", "booktabs", "alafoli", etc. Set to NULL to skip theme application.
 #' @param format_line_fontsize Numeric, font size for format description line (line 3) in
 #'   multi-line headers. Default: 9.
 #' @param merge_variable_header Logical, whether to merge Variable column header across
@@ -33,6 +33,9 @@
 #'   Default: FALSE.
 #' @param bold_subheaders Logical, whether to bold subheader rows (rows with NA statistics).
 #'   Default: TRUE.
+#' @param subheader_bg_color Character string, background color for subheader rows.
+#'   Can be a hex color (e.g., "#F0F0F0") or color name. Default: "#F0F0F0" (light gray).
+#'   Set to NULL or "transparent" to remove background color.
 #' @param ... Additional arguments passed to \code{flextable::flextable()}
 #'
 #' @return A \code{flextable} object formatted for Word export.
@@ -95,12 +98,13 @@ table1_to_flextable <- function(table1_result,
                                 footer_text = NULL,
                                 table_width = 1.0,
                                 table_layout = "autofit",
-                                theme = "vanilla",
+                                theme = "table1",
                                 format_line_fontsize = 9,
                                 merge_variable_header = NULL,
                                 bold_header = TRUE,
                                 bold_variable_column = FALSE,
                                 bold_subheaders = TRUE,
+                                subheader_bg_color = "#F0F0F0",
                                 ...) {
   
   # Check for flextable package
@@ -406,20 +410,38 @@ table1_to_flextable <- function(table1_result,
   
   # Apply theme
   if (!is.null(theme)) {
-    theme_func <- switch(theme,
-      "vanilla" = flextable::theme_vanilla,
-      "booktabs" = flextable::theme_booktabs,
-      "alafoli" = flextable::theme_alafoli,
-      "box" = flextable::theme_box,
-      "tron" = flextable::theme_tron,
-      "vader" = flextable::theme_vader,
-      "zebra" = flextable::theme_zebra,
-      NULL
-    )
-    if (!is.null(theme_func)) {
-      ft <- theme_func(ft)
+    if (theme == "table1") {
+      # Custom Table 1 theme
+      ft <- theme_table1(ft, subheader_bg_color = subheader_bg_color, 
+                         subheader_rows = subheader_rows)
     } else {
-      warning("Unknown theme '", theme, "'. Available themes: vanilla, booktabs, alafoli, box, tron, vader, zebra")
+      # Standard flextable themes
+      theme_func <- switch(theme,
+        "vanilla" = flextable::theme_vanilla,
+        "booktabs" = flextable::theme_booktabs,
+        "alafoli" = flextable::theme_alafoli,
+        "box" = flextable::theme_box,
+        "tron" = flextable::theme_tron,
+        "vader" = flextable::theme_vader,
+        "zebra" = flextable::theme_zebra,
+        NULL
+      )
+      if (!is.null(theme_func)) {
+        ft <- theme_func(ft)
+        # Apply background color to subheader rows (after theme so it doesn't get overridden)
+        if (length(subheader_rows) > 0 && !is.null(subheader_bg_color) && 
+            tolower(subheader_bg_color) != "transparent") {
+          ft <- flextable::bg(ft, i = subheader_rows, bg = subheader_bg_color)
+        }
+      } else {
+        warning("Unknown theme '", theme, "'. Available themes: table1, vanilla, booktabs, alafoli, box, tron, vader, zebra")
+      }
+    }
+  } else {
+    # No theme specified - still apply subheader background if requested
+    if (length(subheader_rows) > 0 && !is.null(subheader_bg_color) && 
+        tolower(subheader_bg_color) != "transparent") {
+      ft <- flextable::bg(ft, i = subheader_rows, bg = subheader_bg_color)
     }
   }
   

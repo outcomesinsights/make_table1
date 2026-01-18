@@ -19,7 +19,8 @@
 #' @keywords internal
 .summarize_variable <- function(data, variable, label = NULL, var_type = NULL,
                                 digits = 2, center_fun = mean, spread_fun = sd,
-                                group = NULL, scaling = 100, level_spec = NULL) {
+                                group = NULL, scaling = 100, level_spec = NULL,
+                                center_fun_name = NULL, spread_fun_name = NULL) {
   
   # Get label
   if (is.null(label)) {
@@ -40,12 +41,23 @@
   
   # Handle empty variables
   if (var_type == "empty" || n_valid == 0) {
-    return(data.frame(
+    # Create subheader row with variable label
+    subheader_row <- data.frame(
       varname = label,
+      statistic = NA_character_,
+      n = NA_integer_,
+      stringsAsFactors = FALSE
+    )
+    
+    # Create indented row with NA statistic
+    indented_row <- data.frame(
+      varname = paste0("\u00A0\u00A0", "N/A"),
       statistic = NA_character_,
       n = 0L,
       stringsAsFactors = FALSE
-    ))
+    )
+    
+    return(rbind(subheader_row, indented_row))
   }
   
   # TODO: Re-implement SMD calculation in future version
@@ -66,12 +78,29 @@
     
     statistic <- paste0(center_fmt, " (", spread_fmt, ")")
     
-    return(data.frame(
+    # Create subheader row with variable label
+    subheader_row <- data.frame(
       varname = label,
+      statistic = NA_character_,
+      n = NA_integer_,
+      stringsAsFactors = FALSE
+    )
+    
+    # Create indented row with statistic type label and actual statistic
+    # Use non-breaking spaces (\u00A0) to ensure they display properly in Word/flextable
+    # Get function names for labels
+    center_name <- if (identical(center_fun, mean)) "Mean" else if (identical(center_fun, median)) "Median" else "Center"
+    spread_name <- if (identical(spread_fun, sd)) "SD" else if (identical(spread_fun, IQR)) "IQR" else "Spread"
+    
+    stat_label <- paste0("\u00A0\u00A0", center_name, " (", spread_name, ")")
+    indented_row <- data.frame(
+      varname = stat_label,
       statistic = statistic,
       n = n_valid,
       stringsAsFactors = FALSE
-    ))
+    )
+    
+    return(rbind(subheader_row, indented_row))
   }
   
   # Binary variables
@@ -101,12 +130,33 @@
     
     statistic <- paste0(pct_fmt, "% (", n_fmt, ")")
     
-    return(data.frame(
+    # Create subheader row with variable label
+    subheader_row <- data.frame(
       varname = label,
+      statistic = NA_character_,
+      n = NA_integer_,
+      stringsAsFactors = FALSE
+    )
+    
+    # Create indented row with statistic in statistic column
+    # Use non-breaking spaces (\u00A0) to ensure they display properly in Word/flextable
+    # For binary variables, we'll use a generic label or the reference level name
+    if (is.factor(x)) {
+      level_label <- ref_level
+    } else if (is.logical(x)) {
+      level_label <- "Yes"
+    } else {
+      level_label <- "Yes"  # For numeric binary (0/1)
+    }
+    
+    indented_row <- data.frame(
+      varname = paste0("\u00A0\u00A0", level_label),
       statistic = statistic,
       n = n_valid,
       stringsAsFactors = FALSE
-    ))
+    )
+    
+    return(rbind(subheader_row, indented_row))
   }
   
   # Categorical variables (factors with >2 levels)
@@ -118,15 +168,35 @@
       level_defs <- .expand_levels(data, variable, label, level_spec)
       
       if (length(level_defs) == 0) {
-        # No levels to expand - treat as single variable
+        # No levels to expand - treat as single variable with subheader + indented row
         warning("No valid levels found for variable '", variable, "' with level specification")
-        return(data.frame(
+        
+        # Create subheader row with variable label
+        subheader_row <- data.frame(
           varname = label,
+          statistic = NA_character_,
+          n = NA_integer_,
+          stringsAsFactors = FALSE
+        )
+        
+        # Create indented row with NA statistic
+        indented_row <- data.frame(
+          varname = paste0("\u00A0\u00A0", "N/A"),
           statistic = NA_character_,
           n = n_valid,
           stringsAsFactors = FALSE
-        ))
+        )
+        
+        return(rbind(subheader_row, indented_row))
       }
+      
+      # Create subheader row with variable label
+      subheader_row <- data.frame(
+        varname = label,
+        statistic = NA_character_,
+        n = NA_integer_,
+        stringsAsFactors = FALSE
+      )
       
       result_rows <- vector("list", length(level_defs))
       
@@ -149,15 +219,19 @@
         pct_fmt <- fmt(pct, digits = digits)
         n_fmt <- fmt(n_level, digits = 0)
         
+        # Indent level names with 2 spaces
+        # Use non-breaking spaces (\u00A0) to ensure they display properly in Word/flextable
+        indented_level_label <- paste0("\u00A0\u00A0", level_label)
         result_rows[[i]] <- data.frame(
-          varname = level_label,
+          varname = indented_level_label,
           statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
           n = n_valid,
           stringsAsFactors = FALSE
         )
       }
       
-      return(do.call(rbind, result_rows))
+      # Combine subheader + level rows
+      return(rbind(subheader_row, do.call(rbind, result_rows)))
     } else {
       # Auto-expand: use current behavior
       # Check if variable is already a factor (before converting)
@@ -206,9 +280,17 @@
         # Combine subheader + level rows
         return(rbind(subheader_row, do.call(rbind, level_rows)))
       } else {
-        # Non-factor categorical (character): use existing behavior
-        # Create separate rows for each level with "Label - Level" format
-        result_rows <- vector("list", n_levels)
+        # Non-factor categorical (character): use same format as factors
+        # Create subheader row with variable label
+        subheader_row <- data.frame(
+          varname = label,
+          statistic = NA_character_,
+          n = NA_integer_,
+          stringsAsFactors = FALSE
+        )
+        
+        # Create indented level rows
+        level_rows <- vector("list", n_levels)
         
         for (i in seq_along(levels_x)) {
           level_i <- levels_x[i]
@@ -218,9 +300,10 @@
           pct_fmt <- fmt(pct, digits = digits)
           n_fmt <- fmt(n_level, digits = 0)
           
-          # For non-factor categorical variables, use "Label - Level" format
-          level_label <- paste0(label, " - ", level_i)
-          result_rows[[i]] <- data.frame(
+          # Indent level names with 2 spaces
+          # Use non-breaking spaces (\u00A0) to ensure they display properly in Word/flextable
+          level_label <- paste0("\u00A0\u00A0", level_i)
+          level_rows[[i]] <- data.frame(
             varname = level_label,
             statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
             n = n_valid,
@@ -228,7 +311,8 @@
           )
         }
         
-        return(do.call(rbind, result_rows))
+        # Combine subheader + level rows
+        return(rbind(subheader_row, do.call(rbind, level_rows)))
       }
     }
   }
