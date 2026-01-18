@@ -59,7 +59,7 @@ test_that("implement_table1 adds table to document", {
   # Create test data
   test_data <- data.frame(
     age = c(30, 40, 50, 60),
-    sex = c("M", "F", "M", "F")
+    sex = factor(c("M", "F", "M", "F"))
   )
   
   table1 <- specify_table1(test_data, vars = c("age", "sex"))
@@ -76,13 +76,13 @@ test_that("implement_table1 adds caption when provided", {
   
   test_data <- data.frame(
     age = c(30, 40, 50, 60),
-    sex = c("M", "F", "M", "F")
+    sex = factor(c("M", "F", "M", "F"))
   )
   
   table1 <- specify_table1(test_data, vars = c("age", "sex"))
   
   doc <- table1_word_doc() |>
-    implement_table1(table1, caption = "Table 1: Test")
+    implement_table1(table1, caption = "Table 1: Test", caption_style = "Normal")
   
   expect_s3_class(doc, "rdocx")
 })
@@ -93,7 +93,7 @@ test_that("implement_table1 passes formatting options to table1_to_flextable", {
   
   test_data <- data.frame(
     age = c(30, 40, 50, 60),
-    sex = c("M", "F", "M", "F")
+    sex = factor(c("M", "F", "M", "F"))
   )
   
   table1 <- specify_table1(test_data, vars = c("age", "sex"))
@@ -102,6 +102,7 @@ test_that("implement_table1 passes formatting options to table1_to_flextable", {
     implement_table1(
       table1,
       caption = "Table 1",
+      caption_style = "Normal",
       multiline_header = TRUE,
       footer_text = "Test footer"
     )
@@ -170,7 +171,7 @@ test_that("save_table1_doc validates file argument", {
 test_that("builder functions validate document object", {
   skip_if_not_installed("officer")
   
-  test_data <- data.frame(age = c(30, 40), sex = c("M", "F"))
+  test_data <- data.frame(age = c(30, 40), sex = factor(c("M", "F")))
   table1 <- specify_table1(test_data, vars = c("age", "sex"))
   
   expect_error(add_section_heading("not a doc", "Test"), "must be an officer document")
@@ -186,7 +187,7 @@ test_that("integration test: build complete document", {
   
   test_data <- data.frame(
     age = c(30, 40, 50, 60),
-    sex = c("M", "F", "M", "F"),
+    sex = factor(c("M", "F", "M", "F")),
     group = c("A", "A", "B", "B")
   )
   
@@ -197,13 +198,14 @@ test_that("integration test: build complete document", {
   
   doc <- table1_word_doc() |>
     add_section_heading("Section 1: Single Column Table") |>
-    implement_table1(table1_single, caption = "Table 1: Single Column") |>
+    implement_table1(table1_single, caption = "Table 1: Single Column", caption_style = "Normal") |>
     add_page_break() |>
     set_orientation("portrait") |>
     add_section_heading("Section 2: Multi Column Table") |>
     implement_table1(
       table1_multi,
       caption = "Table 2: Multi Column",
+      caption_style = "Normal",
       multiline_header = TRUE,
       footer_text = "Note: Test footer"
     ) |>

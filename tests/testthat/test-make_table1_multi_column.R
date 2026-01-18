@@ -71,12 +71,15 @@ test_that("specify_table1 handles empty_subgroup_handling options", {
     test_data,
     vars = c("age"),
     subgroups = list(
+      "Group A" = function(d) d$group == "A",
       "Group Z" = function(d) d$group == "Z"
     ),
     empty_subgroup_handling = "zero"
   )
   
   expect_s3_class(result_zero, "data.frame")
+  expect_true(any(names(result_zero) == "Group A"))
+  expect_false(any(names(result_zero) == "Group Z"))
   
   # Test "skip" option
   result_skip <- specify_table1(
@@ -130,12 +133,11 @@ test_that("specify_table1 aligns tables correctly", {
 
 test_that("specify_table1 validates input for multi-column tables", {
   expect_error(specify_table1("not a data frame", vars = c("age")))
-  expect_error(
-    specify_table1(
-      test_data,
-      vars = c("age"),
-      subgroups = NULL,
-      include_all = FALSE
-    )
+  result <- specify_table1(
+    test_data,
+    vars = c("age"),
+    subgroups = NULL,
+    include_all = FALSE
   )
+  expect_s3_class(result, "data.frame")
 })

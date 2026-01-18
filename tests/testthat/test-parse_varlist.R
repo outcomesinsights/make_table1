@@ -14,7 +14,8 @@ test_that(".parse_varlist handles simple nested list", {
   
   expect_equal(result$vars$var, c("age", "sex"))
   expect_equal(result$vars$label, c("Age (years)", "Sex"))
-  expect_equal(result$vars$subheader, c("Demographics", "Demographics"))
+  expect_equal(result$title, "Demographics")
+  expect_equal(result$vars$subheader, c("", ""))
 })
 
 test_that(".parse_varlist handles table title", {

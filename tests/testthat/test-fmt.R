@@ -12,7 +12,7 @@ test_that("fmt handles vectors", {
 
 test_that("fmt handles NA values", {
   result <- fmt(c(1.23, NA, 4.56), digits = 2)
-  expect_true(is.na(result[2]))
+  expect_equal(result[2], "NA")
   expect_equal(result[1], "1.23")
   expect_equal(result[3], "4.56")
 })

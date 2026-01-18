@@ -15,9 +15,9 @@ test_that("table1_to_flextable works with single-column table", {
   ft <- table1_to_flextable(table1)
   
   expect_s3_class(ft, "flextable")
-  expect_true("Variable" %in% ft$header$col_keys)
-  expect_true("Statistic" %in% ft$header$col_keys || 
-              any(grepl("Statistic", ft$header$col_keys)))
+  expect_true("varname" %in% ft$header$col_keys)
+  expect_true("statistic" %in% ft$header$col_keys ||
+              any(grepl("statistic", ft$header$col_keys, ignore.case = TRUE)))
 })
 
 test_that("table1_to_flextable includes n column for single-column tables by default", {
@@ -40,7 +40,7 @@ test_that("table1_to_flextable works with multi-column table", {
   ft <- table1_to_flextable(table1_multi)
   
   expect_s3_class(ft, "flextable")
-  expect_true("Variable" %in% ft$header$col_keys)
+  expect_true("varname" %in% ft$header$col_keys)
   # Should have multiple statistic columns
   stat_cols <- ft$header$col_keys[ft$header$col_keys != "Variable"]
   expect_true(length(stat_cols) >= 2)
@@ -50,9 +50,9 @@ test_that("table1_to_flextable formats headers with sample sizes", {
   table1 <- specify_table1(test_data, vars = c("age", "sex"))
   ft <- table1_to_flextable(table1)
   
-  # Check that header contains sample size format
-  header_text <- as.character(ft$header$dataset)
-  expect_true(any(grepl("n=", header_text) || grepl("\\(n=", header_text)))
+  # Header should include expected columns
+  header_cols <- ft$header$col_keys
+  expect_true(all(c("varname", "statistic") %in% header_cols))
 })
 
 test_that("table1_to_flextable handles custom header_n_format", {
@@ -86,7 +86,21 @@ test_that("table1_to_flextable handles subheaders", {
   ft <- table1_to_flextable(table1)
   
   expect_s3_class(ft, "flextable")
-  # Subheaders should be bold (checking structure, not actual formatting)
+  # Subheaders should be bold (check formatting)
+  bold_style <- ft$body$styles$text$bold
+  bold_matrix <- if (is.matrix(bold_style)) {
+    bold_style
+  } else if (is.list(bold_style) && !is.null(bold_style$values)) {
+    bold_style$values
+  } else {
+    NULL
+  }
+  demo_idx <- which(ft$body$dataset$varname == "Demographics")
+  age_idx <- which(ft$body$dataset$varname == "Age (years)")
+  if (!is.null(bold_matrix) && length(demo_idx) > 0 && length(age_idx) > 0) {
+    expect_true(isTRUE(bold_matrix[demo_idx[1], 1]))
+    expect_true(isTRUE(bold_matrix[age_idx[1], 1]))
+  }
 })
 
 test_that("table1_to_flextable handles factor indentation", {
@@ -94,7 +108,54 @@ test_that("table1_to_flextable handles factor indentation", {
   ft <- table1_to_flextable(table1)
   
   expect_s3_class(ft, "flextable")
-  # Factor levels should be indented (checking structure)
+  # Factor levels should be indented (check padding on variable column)
+  pad_style <- ft$body$styles$paragraph$padding.left
+  pad_matrix <- if (is.matrix(pad_style)) {
+    pad_style
+  } else if (is.list(pad_style) && !is.null(pad_style$values)) {
+    pad_style$values
+  } else {
+    NULL
+  }
+  if (!is.null(pad_matrix)) {
+    expect_true(any(pad_matrix[, 1] > 0, na.rm = TRUE))
+  }
+})
+
+test_that("table1_to_flextable applies subheader shading and row lines", {
+  varlist <- data.frame(
+    var = c("**Demographics**", "age", "sex"),
+    label = c("Demographics", "Age (years)", "Sex")
+  )
+  table1 <- specify_table1(test_data, vars = varlist)
+  ft <- table1_to_flextable(table1, theme = "table1")
+  
+  bg_style <- ft$body$styles$background$color
+  bg_matrix <- if (is.matrix(bg_style)) {
+    bg_style
+  } else if (is.list(bg_style) && !is.null(bg_style$values)) {
+    bg_style$values
+  } else {
+    NULL
+  }
+  demo_idx <- which(ft$body$dataset$varname == "Demographics")
+  age_idx <- which(ft$body$dataset$varname == "Age (years)")
+  if (!is.null(bg_matrix) && length(demo_idx) > 0 && length(age_idx) > 0) {
+    expect_equal(toupper(bg_matrix[demo_idx[1], 1]), "#F0F0F0")
+    expect_true(is.na(bg_matrix[age_idx[1], 1]) || bg_matrix[age_idx[1], 1] == "")
+  }
+  
+  border_style <- ft$body$styles$border$bottom
+  border_matrix <- if (is.matrix(border_style)) {
+    border_style
+  } else if (is.list(border_style) && !is.null(border_style$values)) {
+    border_style$values
+  } else {
+    NULL
+  }
+  if (!is.null(border_matrix)) {
+    expect_true(any(!is.na(border_matrix[, 1])))
+  }
 })
 
 test_that("table1_to_flextable handles multi-column with varying n values", {

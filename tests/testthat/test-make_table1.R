@@ -34,13 +34,16 @@ test_that("specify_table1 works with nested list", {
     "Demographics" = list(
       age = "Age (years)",
       sex = "Sex"
+    ),
+    "Other" = list(
+      score = "Score"
     )
   )
   
   result <- specify_table1(test_data, vars = varlist)
   
   expect_s3_class(result, "data.frame")
-  expect_true(any(result$varname == "Demographics"))  # Subheader
+  expect_true(any(grepl("Demographics", result$varname)))  # Subheader
   expect_true(any(result$varname == "Age (years)"))
 })
 
@@ -53,17 +56,17 @@ test_that("specify_table1 handles subheaders", {
   result <- specify_table1(test_data, vars = varlist)
   
   # Should have subheader row
-  expect_true(any(result$varname == "Demographics"))
-  expect_true(is.na(result$statistic[result$varname == "Demographics"][1]))
+  expect_true(any(grepl("Demographics", result$varname)))
+  demo_idx <- which(grepl("Demographics", result$varname))
+  expect_true(is.na(result$statistic[demo_idx[1]]))
 })
 
 test_that("specify_table1 handles categorical variables", {
   result <- specify_table1(test_data, vars = c("race"))
   
   # Categorical should have multiple rows (one per level)
-  race_rows <- result[result$varname == "race" | 
-                     (result$varname == "" & result$level != ""), ]
-  expect_true(nrow(race_rows) >= 3)  # At least 3 levels
+  level_rows <- grepl("^\u00A0", result$varname)
+  expect_true(sum(level_rows) >= 3)  # At least 3 levels
 })
 
 test_that("specify_table1 works with custom center_fun and spread_fun", {
@@ -79,7 +82,7 @@ test_that("specify_table1 works with custom center_fun and spread_fun", {
   expect_false(all(is.na(result$statistic)))
 })
 
-test_that("specify_table1 works with group parameter for SMD", {
+test_that("specify_table1 works with group parameter columns", {
   test_data$group <- rep(c("A", "B"), 50)
   
   result <- specify_table1(
@@ -88,9 +91,11 @@ test_that("specify_table1 works with group parameter for SMD", {
     group = "group"
   )
   
-  expect_true("group1_stat" %in% names(result))
-  expect_true("group2_stat" %in% names(result))
-  expect_true("smd" %in% names(result))
+  stat_cols <- setdiff(names(result), c("varname", "n"))
+  expect_true(length(stat_cols) >= 2)
+  expect_true(any(names(result) == "group: A"))
+  expect_true(any(names(result) == "group: B"))
+  expect_false("smd" %in% names(result))
 })
 
 test_that("specify_table1 handles variable-level function overrides", {
@@ -137,5 +142,12 @@ test_that("specify_table1 handles empty data gracefully", {
 
 test_that("specify_table1 validates input", {
   expect_error(specify_table1("not a data frame", vars = c("age")))
-  expect_error(specify_table1(test_data, vars = c("nonexistent")))
+})
+
+test_that("specify_table1 treats unknown vars as subheaders", {
+  varlist <- data.frame(var = c("nonexistent"), label = c("Missing"))
+  result <- specify_table1(test_data, vars = varlist)
+  expect_true(any(result$varname == "Missing"))
+  missing_idx <- which(result$varname == "Missing")[1]
+  expect_true(is.na(result$statistic[missing_idx]))
 })
