@@ -277,12 +277,36 @@ table1_to_flextable <- function(table1_result,
     }
   }
   
-  # Identify subheader rows (rows with NA statistics)
-  subheader_rows <- integer(0)
-  for (stat_col in statistic_cols) {
-    na_rows <- which(is.na(ft_data_display[[stat_col]]))
-    subheader_rows <- unique(c(subheader_rows, na_rows))
+  # Identify subheader rows
+  row_is_indented <- rep(FALSE, nrow(ft_data_display))
+  if (length(indent_rows) > 0) {
+    row_is_indented[indent_rows] <- TRUE
   }
+  
+  row_followed_by_indented <- rep(FALSE, nrow(ft_data_display))
+  if (nrow(ft_data_display) > 1) {
+    row_followed_by_indented[seq_len(nrow(ft_data_display) - 1)] <- row_is_indented[seq_len(nrow(ft_data_display) - 1) + 1]
+  }
+  
+  # Top-level subheaders: non-indented rows where ALL statistic columns are NA,
+  # and NOT immediately followed by an indented row
+  subheader_rows <- integer(0)
+  if (length(statistic_cols) > 0 && nrow(ft_data_display) > 0) {
+    stat_na_matrix <- sapply(statistic_cols, function(col) is.na(ft_data_display[[col]]))
+    row_all_na <- if (is.matrix(stat_na_matrix)) {
+      rowSums(stat_na_matrix) == length(statistic_cols)
+    } else {
+      # single statistic column
+      stat_na_matrix
+    }
+    subheader_rows <- which(row_all_na & !row_is_indented & !row_followed_by_indented)
+  }
+  
+  # Variable header rows: non-indented rows immediately followed by an indented row
+  variable_header_rows <- which(!row_is_indented & row_followed_by_indented)
+  
+  # All subheaders for bolding: top-level + variable header rows
+  all_subheader_rows <- unique(c(subheader_rows, variable_header_rows))
   
   # Create flextable
   if (multiline_header) {
@@ -370,21 +394,6 @@ table1_to_flextable <- function(table1_result,
   }
   ft <- flextable::align(ft, align = "center", part = "header")
   
-  # Bold subheader rows (if requested)
-  if (bold_subheaders && length(subheader_rows) > 0) {
-    ft <- flextable::bold(ft, i = subheader_rows)
-  }
-  
-  # Bold variable column (if requested)
-  if (bold_variable_column) {
-    ft <- flextable::bold(ft, j = 1)
-  }
-  
-  # Apply indentation using padding
-  if (length(indent_rows) > 0) {
-    ft <- flextable::padding(ft, i = indent_rows, j = 1, padding.left = indent_width)
-  }
-  
   # Align columns
   # Left-align varname column
   ft <- flextable::align(ft, j = 1, align = "left")
@@ -413,7 +422,12 @@ table1_to_flextable <- function(table1_result,
     if (theme == "table1") {
       # Custom Table 1 theme
       ft <- theme_table1(ft, subheader_bg_color = subheader_bg_color, 
-                         subheader_rows = subheader_rows)
+                         subheader_rows = subheader_rows,
+                         all_subheader_rows = all_subheader_rows,
+                         bold_subheaders = bold_subheaders,
+                         bold_variable_column = bold_variable_column,
+                         indent_rows = indent_rows,
+                         indent_width = indent_width)
     } else {
       # Standard flextable themes
       theme_func <- switch(theme,
