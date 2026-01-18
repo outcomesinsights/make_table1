@@ -16,9 +16,9 @@
 - [ ] Error handling for custom center_fun/spread_fun that might fail
 - [ ] Handle cases where center_fun or spread_fun return NA
 
-### 3. SMD Calculations (`summarize_variable.R`)
-- [ ] Verify SMD formula for continuous variables (pooled SD)
-- [ ] Verify SMD formula for categorical variables
+### 3. Group Comparisons (`summarize_variable.R`)
+- [ ] Verify group comparison logic for continuous variables
+- [ ] Verify group comparison logic for categorical variables
 - [ ] Handle edge cases: zero variance, all same value in one group
 - [ ] What if group variable has more than 2 levels? (currently errors)
 

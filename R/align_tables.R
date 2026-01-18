@@ -55,7 +55,7 @@
         n = 0L,
         stringsAsFactors = FALSE
       )
-      # Add any additional columns from reference (like group1_stat, group2_stat, smd)
+      # Add any additional columns from reference (like group1_stat, group2_stat)
       ref_cols <- setdiff(names(ref_table), c("varname", "statistic", "n", "level"))
       for (col in ref_cols) {
         aligned_tables[[i]][[col]] <- NA
@@ -92,7 +92,7 @@
       )
     }
     
-    # Handle any additional columns from table_i (like group1_stat, group2_stat, smd)
+    # Handle any additional columns from table_i (like group1_stat, group2_stat)
     other_cols <- setdiff(names(table_i), c("varname", "level", "statistic", "n"))
     for (col in other_cols) {
       aligned[[col]] <- ifelse(

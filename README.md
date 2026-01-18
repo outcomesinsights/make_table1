@@ -4,12 +4,10 @@ An R package for creating Table 1, which typically contains descriptive informat
 
 ## Features
 
-- **Zero dependencies** (core functionality uses only base R)
 - **Automatic variable type detection** (continuous, binary, categorical)
 - **Flexible summary statistics** (mean/median, SD/IQR, or custom functions)
-- **Standardized mean differences (SMD)** for group comparisons
-- **Multi-column tables** for comparing multiple subgroups
-- **YAML support** for easy variable specification (optional)
+- **Multi-column tables** for comparing subgroups
+- **YAML support** for variable specification (optional)
 - **Variable-level function overrides** for custom statistics
 
 ## Installation
@@ -21,14 +19,14 @@ An R package for creating Table 1, which typically contains descriptive informat
 install.packages("devtools")
 
 # Install from local directory
-devtools::install("/Users/mark/Documents/rprojects/package_development/table1")
+devtools::install("path/to/table1")
 ```
 
 ### For Development (Load Without Installing)
 
 ```r
 library(devtools)
-load_all("/Users/mark/Documents/rprojects/package_development/table1")
+load_all("path/to/table1")
 ```
 
 See [INSTALL.md](INSTALL.md) for detailed installation instructions.
@@ -83,10 +81,16 @@ table1 <- specify_table1(data, vars = yaml_str)
 
 ## Main Functions
 
-- `specify_table1()` - Create Table 1 with optional SMD calculation
-- `specify_table1_multi()` - Create multi-column Table 1 for multiple subgroups
+- `specify_table1()` - Create Table 1 with optional subgroups
+- `table1_to_flextable()` - Convert to `flextable` for Word output
 - `fmt()` - Format numeric values with rounding and thousand separators
 - `parse_yaml_varlist()` - Parse YAML specification for variables
+
+## Tests
+
+```r
+devtools::test()
+```
 
 ## Development
 

@@ -4,7 +4,16 @@
 \alias{theme_table1}
 \title{Custom Theme for Table 1}
 \usage{
-theme_table1(ft, subheader_bg_color = "#F0F0F0", subheader_rows = NULL)
+theme_table1(
+  ft,
+  subheader_bg_color = "#F0F0F0",
+  subheader_rows = NULL,
+  all_subheader_rows = NULL,
+  bold_subheaders = TRUE,
+  bold_variable_column = FALSE,
+  indent_rows = NULL,
+  indent_width = 2
+)
 }
 \arguments{
 \item{ft}{A \code{flextable} object}
@@ -12,8 +21,21 @@ theme_table1(ft, subheader_bg_color = "#F0F0F0", subheader_rows = NULL)
 \item{subheader_bg_color}{Character string, background color for subheader rows.
 Default: "#F0F0F0" (light gray). Set to NULL to skip subheader shading.}
 
-\item{subheader_rows}{Integer vector of row indices for subheader rows.
-If NULL, will attempt to identify them automatically.}
+\item{subheader_rows}{Integer vector of row indices for top-level subheader rows
+(for shading). If NULL, will attempt to identify them automatically.}
+
+\item{all_subheader_rows}{Integer vector of row indices for all subheader rows
+(for bolding, includes both top-level and variable subheaders). If NULL, will
+attempt to identify them automatically.}
+
+\item{bold_subheaders}{Logical, whether to bold subheader rows. Default: TRUE.}
+
+\item{bold_variable_column}{Logical, whether to bold all rows in the variable column.
+Default: FALSE.}
+
+\item{indent_rows}{Integer vector of row indices to indent. Default: NULL.}
+
+\item{indent_width}{Numeric, indentation width for variable column. Default: 2.}
 }
 \value{
 The modified \code{flextable} object
@@ -27,7 +49,8 @@ spacing, and subheader styling.
 The theme applies:
 \itemize{
 \item Clean borders: top and bottom borders for header, minimal borders for body
-\item Subheader background shading (light gray by default)
+\item Subheader background shading (light gray by default) for top-level subheaders
+\item Bold formatting for subheader rows (if requested)
 \item Appropriate padding and spacing
 \item Consistent font styling
 }

@@ -7,7 +7,7 @@ library(table1)
 cat("=== table1 Package Documentation ===\n\n")
 
 cat("Main Functions:\n")
-cat("  ?specify_table1          - Create Table 1 with optional SMD\n")
+cat("  ?specify_table1          - Create Table 1 with optional group columns\n")
 cat("  ?specify_table1_multi    - Create multi-column Table 1\n")
 cat("  ?fmt                  - Format numeric values\n")
 cat("  ?parse_yaml_varlist   - Parse YAML variable specifications\n\n")

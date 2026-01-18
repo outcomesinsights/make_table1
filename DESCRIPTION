@@ -4,12 +4,13 @@ Title: Create Table 1 for Descriptive Statistics
 Version: 0.0.0.9000
 Authors@R: 
     person("Your Name", "Your Role", email = "your.email@example.com", role = c("aut", "cre"))
+Depends:
+    R (>= 4.1.0)
 Description: A lightweight R package for creating Table 1, which typically
     contains descriptive information about persons under study in statistical
     analyses. Table 1 provides summary statistics for baseline characteristics.
     Features include automatic variable type detection, flexible summary
-    statistics (mean/median, SD/IQR), optional standardized mean differences
-    (SMD) for group comparisons, and multi-column tables for comparing multiple
+    statistics (mean/median, SD/IQR), and multi-column tables for comparing multiple
     subgroups. Supports YAML specification for easy variable definition. Core
     functionality uses only base R; YAML parsing requires the 'yaml' package
     (suggested dependency).

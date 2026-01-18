@@ -102,12 +102,12 @@ table1_multi <- specify_table1_multi(
 print(table1_multi)
 cat("\n\n")
 
-# Example 8: With SMD calculation
-cat("Example 8: With SMD calculation\n")
-cat("================================\n")
-table1_smd <- specify_table1(
+# Example 8: Grouped table
+cat("Example 8: Grouped table\n")
+cat("========================\n")
+table1_grouped <- specify_table1(
   data,
   vars = c("age", "sex", "treated"),
   group = "group"
 )
-print(table1_smd)
+print(table1_grouped)

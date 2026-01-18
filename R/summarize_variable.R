@@ -10,7 +10,7 @@
 #' @param digits Number of digits for rounding
 #' @param center_fun Function for center statistic (mean, median, etc.)
 #' @param spread_fun Function for spread statistic (sd, IQR, etc.)
-#' @param group Deprecated. Not currently used (SMD functionality removed).
+#' @param group Deprecated. Not currently used.
 #' @param scaling Scaling factor for percentages (default = 100)
 #' @param level_spec Optional level specification for categorical variables
 #'
@@ -60,12 +60,7 @@
     return(rbind(subheader_row, indented_row))
   }
   
-  # TODO: Re-implement SMD calculation in future version
-  # SMD functionality has been temporarily removed to simplify the API
   # The group parameter is now used to create multi-column tables instead
-  # if (!is.null(group)) {
-  #   return(.summarize_variable_grouped(...))
-  # }
   
   # Continuous variables (but not if level_spec is provided - those are categorical)
   if (var_type == "continuous" && is.null(level_spec)) {
@@ -335,133 +330,4 @@
     n = n_valid,
     stringsAsFactors = FALSE
   ))
-}
-
-#' Summarize Variable with Grouping (for SMD)
-#'
-#' Internal function to summarize a variable by group and calculate SMD.
-#' 
-#' TODO: This function is currently not used. SMD functionality has been
-#' temporarily removed. Re-implement in future version if needed.
-#'
-#' @inheritParams .summarize_variable
-#'
-#' @return Data frame with group statistics and SMD
-#'
-#' @keywords internal
-.summarize_variable_grouped <- function(data, variable, label, var_type,
-                                       digits, center_fun, spread_fun,
-                                       group, scaling) {
-  
-  # Check group variable
-  if (!group %in% names(data)) {
-    stop("Group variable '", group, "' not found in data")
-  }
-  
-  group_var <- data[[group]]
-  group_levels <- unique(group_var[!is.na(group_var)])
-  
-  if (length(group_levels) != 2) {
-    stop("Group variable must have exactly 2 levels, found ", length(group_levels))
-  }
-  
-  # Split data by group
-  data_group1 <- data[group_var == group_levels[1], , drop = FALSE]
-  data_group2 <- data[group_var == group_levels[2], , drop = FALSE]
-  
-  # Summarize for each group
-  sum1 <- .summarize_variable(
-    data = data_group1, variable = variable, label = label,
-    var_type = var_type, digits = digits,
-    center_fun = center_fun, spread_fun = spread_fun,
-    group = NULL, scaling = scaling
-  )
-  
-  sum2 <- .summarize_variable(
-    data = data_group2, variable = variable, label = label,
-    var_type = var_type, digits = digits,
-    center_fun = center_fun, spread_fun = spread_fun,
-    group = NULL, scaling = scaling
-  )
-  
-  # Calculate SMD for continuous variables
-  if (var_type == "continuous") {
-    x1 <- data_group1[[variable]]
-    x2 <- data_group2[[variable]]
-    
-    mean1 <- center_fun(x1, na.rm = TRUE)
-    mean2 <- center_fun(x2, na.rm = TRUE)
-    sd1 <- spread_fun(x1, na.rm = TRUE)
-    sd2 <- spread_fun(x2, na.rm = TRUE)
-    
-    # Pooled SD for SMD
-    pooled_sd <- sqrt((sd1^2 + sd2^2) / 2)
-    smd <- (mean1 - mean2) / pooled_sd
-    
-    # Combine results
-    result <- data.frame(
-      varname = label,
-      group1_stat = sum1$statistic,
-      group2_stat = sum2$statistic,
-      smd = fmt(smd, digits = digits),
-      stringsAsFactors = FALSE
-    )
-    
-    return(result)
-  }
-  
-  # For categorical/binary, calculate SMD differently
-  # This is a simplified version - could be improved
-  if (var_type %in% c("binary", "categorical")) {
-    x1 <- data_group1[[variable]]
-    x2 <- data_group2[[variable]]
-    
-    # For binary, use proportion difference
-    if (var_type == "binary") {
-      if (is.factor(x1)) {
-        p1 <- mean(x1 == levels(x1)[min(2, nlevels(x1))], na.rm = TRUE)
-        p2 <- mean(x2 == levels(x2)[min(2, nlevels(x2))], na.rm = TRUE)
-      } else {
-        p1 <- mean(x1 != 0 & !is.na(x1), na.rm = TRUE)
-        p2 <- mean(x2 != 0 & !is.na(x2), na.rm = TRUE)
-      }
-      
-      pooled_p <- (p1 + p2) / 2
-      pooled_se <- sqrt(pooled_p * (1 - pooled_p))
-      smd <- (p1 - p2) / pooled_se
-    } else {
-      # For categorical, use first level proportion
-      if (!is.factor(x1)) x1 <- factor(x1)
-      if (!is.factor(x2)) x2 <- factor(x2)
-      
-      p1 <- mean(x1 == levels(x1)[1], na.rm = TRUE)
-      p2 <- mean(x2 == levels(x2)[1], na.rm = TRUE)
-      
-      pooled_p <- (p1 + p2) / 2
-      pooled_se <- sqrt(pooled_p * (1 - pooled_p))
-      smd <- (p1 - p2) / pooled_se
-    }
-    
-    # Combine results (simplified - would need to handle multiple levels)
-    result <- data.frame(
-      varname = label,
-      group1_stat = sum1$statistic,
-      group2_stat = sum2$statistic,
-      smd = fmt(smd, digits = digits),
-      stringsAsFactors = FALSE
-    )
-    
-    return(result)
-  }
-  
-  # Default: return without SMD
-  result <- data.frame(
-    varname = label,
-    group1_stat = sum1$statistic,
-    group2_stat = sum2$statistic,
-    smd = NA_character_,
-    stringsAsFactors = FALSE
-  )
-  
-  return(result)
 }
