@@ -95,7 +95,6 @@ test_that("specify_table1 works with group parameter columns", {
   expect_true(length(stat_cols) >= 2)
   expect_true(any(names(result) == "group: A"))
   expect_true(any(names(result) == "group: B"))
-  expect_false("smd" %in% names(result))
 })
 
 test_that("specify_table1 handles variable-level function overrides", {

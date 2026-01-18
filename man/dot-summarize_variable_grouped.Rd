@@ -2,7 +2,7 @@
 % Please edit documentation in R/summarize_variable.R
 \name{.summarize_variable_grouped}
 \alias{.summarize_variable_grouped}
-\title{Summarize Variable with Grouping (for SMD)}
+\title{Summarize Variable with Grouping}
 \usage{
 .summarize_variable_grouped(
   data,
@@ -31,18 +31,17 @@
 
 \item{spread_fun}{Function for spread statistic (sd, IQR, etc.)}
 
-\item{group}{Deprecated. Not currently used (SMD functionality removed).}
+\item{group}{Deprecated. Not currently used.}
 
 \item{scaling}{Scaling factor for percentages (default = 100)}
 }
 \value{
-Data frame with group statistics and SMD
+Data frame with group statistics and an optional difference metric
 }
 \description{
-Internal function to summarize a variable by group and calculate SMD.
+Internal function to summarize a variable by group.
 }
 \details{
-TODO: This function is currently not used. SMD functionality has been
-temporarily removed. Re-implement in future version if needed.
+TODO: This function is currently not used.
 }
 \keyword{internal}

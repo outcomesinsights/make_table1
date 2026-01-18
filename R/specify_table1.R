@@ -450,8 +450,7 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       NULL
     }
     
-    # Summarize variable (no group parameter - SMD removed for now)
-    # TODO: Re-implement SMD calculation in future version
+    # Summarize variable (group parameter omitted)
     results[[length(results) + 1]] <- .summarize_variable(
       data = data,
       variable = var_name,
@@ -460,7 +459,7 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       digits = digits,
       center_fun = var_center_fun,
       spread_fun = var_spread_fun,
-      group = NULL,  # SMD removed
+      group = NULL,
       scaling = 100,
       level_spec = var_level_spec
     )

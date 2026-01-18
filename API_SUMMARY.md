@@ -42,7 +42,7 @@ specify_table1(
   digits = 2,              # Decimal places
   center_fun = mean,       # Center statistic function
   spread_fun = sd,         # Spread statistic function
-  group = NULL,            # Grouping variable for SMD
+  group = NULL,            # Grouping variable for columns
   var_types = NULL         # Override type detection
 )
 ```

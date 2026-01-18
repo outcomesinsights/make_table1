@@ -10,7 +10,7 @@
 #' @param digits Number of digits for rounding
 #' @param center_fun Function for center statistic (mean, median, etc.)
 #' @param spread_fun Function for spread statistic (sd, IQR, etc.)
-#' @param group Deprecated. Not currently used (SMD functionality removed).
+#' @param group Deprecated. Not currently used.
 #' @param scaling Scaling factor for percentages (default = 100)
 #' @param level_spec Optional level specification for categorical variables
 #'
@@ -60,8 +60,6 @@
     return(rbind(subheader_row, indented_row))
   }
   
-  # TODO: Re-implement SMD calculation in future version
-  # SMD functionality has been temporarily removed to simplify the API
   # The group parameter is now used to create multi-column tables instead
   # if (!is.null(group)) {
   #   return(.summarize_variable_grouped(...))
@@ -337,16 +335,15 @@
   ))
 }
 
-#' Summarize Variable with Grouping (for SMD)
+#' Summarize Variable with Grouping
 #'
-#' Internal function to summarize a variable by group and calculate SMD.
+#' Internal function to summarize a variable by group.
 #' 
-#' TODO: This function is currently not used. SMD functionality has been
-#' temporarily removed. Re-implement in future version if needed.
+#' TODO: This function is currently not used.
 #'
 #' @inheritParams .summarize_variable
 #'
-#' @return Data frame with group statistics and SMD
+#' @return Data frame with group statistics and an optional difference metric
 #'
 #' @keywords internal
 .summarize_variable_grouped <- function(data, variable, label, var_type,
@@ -384,7 +381,7 @@
     group = NULL, scaling = scaling
   )
   
-  # Calculate SMD for continuous variables
+  # Calculate difference metric for continuous variables
   if (var_type == "continuous") {
     x1 <- data_group1[[variable]]
     x2 <- data_group2[[variable]]
@@ -394,23 +391,23 @@
     sd1 <- spread_fun(x1, na.rm = TRUE)
     sd2 <- spread_fun(x2, na.rm = TRUE)
     
-    # Pooled SD for SMD
+    # Pooled SD for difference metric
     pooled_sd <- sqrt((sd1^2 + sd2^2) / 2)
-    smd <- (mean1 - mean2) / pooled_sd
+    diff_metric <- (mean1 - mean2) / pooled_sd
     
     # Combine results
     result <- data.frame(
       varname = label,
       group1_stat = sum1$statistic,
       group2_stat = sum2$statistic,
-      smd = fmt(smd, digits = digits),
+      diff_metric = fmt(diff_metric, digits = digits),
       stringsAsFactors = FALSE
     )
     
     return(result)
   }
   
-  # For categorical/binary, calculate SMD differently
+  # For categorical/binary, calculate difference metric differently
   # This is a simplified version - could be improved
   if (var_type %in% c("binary", "categorical")) {
     x1 <- data_group1[[variable]]
@@ -428,7 +425,7 @@
       
       pooled_p <- (p1 + p2) / 2
       pooled_se <- sqrt(pooled_p * (1 - pooled_p))
-      smd <- (p1 - p2) / pooled_se
+      diff_metric <- (p1 - p2) / pooled_se
     } else {
       # For categorical, use first level proportion
       if (!is.factor(x1)) x1 <- factor(x1)
@@ -439,7 +436,7 @@
       
       pooled_p <- (p1 + p2) / 2
       pooled_se <- sqrt(pooled_p * (1 - pooled_p))
-      smd <- (p1 - p2) / pooled_se
+      diff_metric <- (p1 - p2) / pooled_se
     }
     
     # Combine results (simplified - would need to handle multiple levels)
@@ -447,19 +444,19 @@
       varname = label,
       group1_stat = sum1$statistic,
       group2_stat = sum2$statistic,
-      smd = fmt(smd, digits = digits),
+      diff_metric = fmt(diff_metric, digits = digits),
       stringsAsFactors = FALSE
     )
     
     return(result)
   }
   
-  # Default: return without SMD
+  # Default: return without difference metric
   result <- data.frame(
     varname = label,
     group1_stat = sum1$statistic,
     group2_stat = sum2$statistic,
-    smd = NA_character_,
+    diff_metric = NA_character_,
     stringsAsFactors = FALSE
   )
   

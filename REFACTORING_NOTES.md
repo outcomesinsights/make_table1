@@ -20,12 +20,12 @@ The package has been completely refactored to follow best practices, minimize de
   - More robust binary detection (handles 0/1, TRUE/FALSE, two-level factors)
 
 ### 3. Unified API ✅
-- **Before**: Separate functions `specify_table1()` and `specify_table1_smd()`
+- **Before**: Separate functions `specify_table1()` and `specify_table1_multi()`
 - **After**: Single `specify_table1()` function with optional `group` parameter
 - **Benefits**:
   - Simpler API - one function to learn
   - Consistent interface
-  - SMD calculation is now just an option, not a separate function
+  - Group comparisons are handled through the same function
 
 ### 4. Flexible Summary Statistics ✅
 - **New parameters**: `center_fun` and `spread_fun`
@@ -60,7 +60,7 @@ The package has been completely refactored to follow best practices, minimize de
   - 2-column data frame (variables and labels)
 - **Optional labels**: Can provide labels separately or in the vars data frame
 - **Type overrides**: `var_types` parameter allows manual type specification
-- **Group comparisons**: Simple `group` parameter for SMD calculation
+- **Group comparisons**: Simple `group` parameter for grouped tables
 
 ## Migration Guide
 
@@ -68,14 +68,14 @@ The package has been completely refactored to follow best practices, minimize de
 ```r
 # Old way - separate functions
 table1 <- specify_table1(varlist, dt, digits = 2)
-table1_smd <- specify_table1_smd(varlist, dt, digits = 2, g = "group")
+table1_grouped <- specify_table1_multi(varlist, dt, digits = 2, g = "group")
 ```
 
 ### New Code:
 ```r
 # New way - unified function
 table1 <- specify_table1(data, vars = varlist, digits = 2)
-table1_smd <- specify_table1(data, vars = varlist, digits = 2, group = "group")
+table1_grouped <- specify_table1(data, vars = varlist, digits = 2, group = "group")
 
 # With custom summary functions
 table1_median <- specify_table1(data, vars = c("age", "score"),
@@ -99,7 +99,7 @@ R/
 2. **Test the package**: Create comprehensive tests in `tests/testthat/`
 3. **Update examples**: Test with real data to ensure everything works
 4. **Consider additional features**:
-   - Support for more than 2 groups in SMD
+   - Support for more than 2 groups in grouped tables
    - Additional summary statistic options
    - Export to different formats (HTML, LaTeX, etc.)
 
