@@ -7,8 +7,8 @@
 #' The function automatically detects variable types and formats them appropriately:
 #' \itemize{
 #'   \item Continuous variables: Center (Spread) - default is Mean (SD)
-#'   \item Binary variables: % (n)
-#'   \item Categorical variables: % (n) for each level (auto-expanded or user-specified)
+#'   \item Binary variables: n (pct) by default
+#'   \item Categorical variables: n (pct) for each level (auto-expanded or user-specified)
 #' }
 #' 
 #' For categorical variables, you can specify which levels to include and their labels
@@ -44,7 +44,8 @@
 #'         var3 = list(var = "var3", label = "Label 3", 
 #'                    center_fun = median, spread_fun = IQR),
 #'         var4 = list(var = "var4", label = "Label 4",
-#'                    levels = list("Level 1" = "value1", "Level 2" = "value2"))
+#'                    levels = list("Level 1" = "value1", "Level 2" = "value2"),
+#'                    combine_remaining = TRUE, other_label = "Other")
 #'       ),
 #'       "Subheader 2" = list(...)
 #'     )
@@ -68,6 +69,8 @@
 #'         levels:
 #'           "Level 1": "value1"
 #'           "Level 2": "value2"
+#'         combine_remaining: true
+#'         other_label: "Other"
 #'     "Subheader 2":
 #'       var5: "Label 5"
 #'   }
@@ -77,6 +80,7 @@
 #' @param labels Optional named vector or data frame mapping variable names to labels.
 #'   If `vars` is a 2-column data frame, labels are taken from column 2.
 #' @param digits Number of digits for continuous variables (default = 2)
+#' @param n_pct_order Order for categorical stats: "n_pct" (default) or "pct_n"
 #' @param center_fun Function for center statistic of continuous variables (default = `mean`).
 #'   Other options: `median`, or custom function.
 #' @param spread_fun Function for spread statistic of continuous variables (default = `sd`).
@@ -156,6 +160,7 @@
 #'
 #' @export
 specify_table1 <- function(data, vars, labels = NULL, digits = 2,
+                       n_pct_order = c("n_pct", "pct_n"),
                        center_fun = mean, spread_fun = sd,
                        group = NULL, subgroups = NULL,
                        include_all = NULL, all_label = "All",
@@ -168,6 +173,7 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
   }
   
   empty_subgroup_handling <- match.arg(empty_subgroup_handling)
+  n_pct_order <- match.arg(n_pct_order)
   
   # Determine if we need multi-column table
   has_group <- !is.null(group)
@@ -185,7 +191,15 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
   
   # Parse vars input - can be character vector, 2-column data frame, nested list, or YAML
   parsed_varlist <- NULL
-  var_overrides <- list(center_funs = list(), spread_funs = list(), levels = list())
+  var_overrides <- list(
+    center_funs = list(),
+    spread_funs = list(),
+    levels = list(),
+    digits = list(),
+    combine_remaining = list(),
+    other_label = list(),
+    binary_display = list()
+  )
   
   # Check if vars is a YAML string or file path
   if (is.character(vars) && length(vars) == 1 && 
@@ -213,6 +227,10 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
     var_overrides$center_funs <- parsed_varlist$center_funs
     var_overrides$spread_funs <- parsed_varlist$spread_funs
     var_overrides$levels <- parsed_varlist$levels
+    var_overrides$digits <- parsed_varlist$digits
+    var_overrides$combine_remaining <- parsed_varlist$combine_remaining
+    var_overrides$other_label <- parsed_varlist$other_label
+    var_overrides$binary_display <- parsed_varlist$binary_display
   } else if (is.data.frame(vars) && ncol(vars) >= 2) {
     # vars is a data frame with variable names and labels
     var_names <- vars[[1]]
@@ -223,6 +241,55 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       subh
     } else {
       rep("", length(var_names))
+    }
+    if ("center_fun" %in% names(vars)) {
+      for (i in seq_along(var_names)) {
+        if (!is.null(vars$center_fun[[i]])) {
+          var_overrides$center_funs[[var_names[i]]] <- vars$center_fun[[i]]
+        }
+      }
+    }
+    if ("spread_fun" %in% names(vars)) {
+      for (i in seq_along(var_names)) {
+        if (!is.null(vars$spread_fun[[i]])) {
+          var_overrides$spread_funs[[var_names[i]]] <- vars$spread_fun[[i]]
+        }
+      }
+    }
+    if ("levels" %in% names(vars)) {
+      for (i in seq_along(var_names)) {
+        if (!is.null(vars$levels[[i]])) {
+          var_overrides$levels[[var_names[i]]] <- vars$levels[[i]]
+        }
+      }
+    }
+    if ("digits" %in% names(vars)) {
+      for (i in seq_along(var_names)) {
+        if (!is.null(vars$digits[[i]])) {
+          var_overrides$digits[[var_names[i]]] <- vars$digits[[i]]
+        }
+      }
+    }
+    if ("combine_remaining" %in% names(vars)) {
+      for (i in seq_along(var_names)) {
+        if (!is.null(vars$combine_remaining[[i]])) {
+          var_overrides$combine_remaining[[var_names[i]]] <- vars$combine_remaining[[i]]
+        }
+      }
+    }
+    if ("other_label" %in% names(vars)) {
+      for (i in seq_along(var_names)) {
+        if (!is.null(vars$other_label[[i]])) {
+          var_overrides$other_label[[var_names[i]]] <- vars$other_label[[i]]
+        }
+      }
+    }
+    if ("binary_display" %in% names(vars)) {
+      for (i in seq_along(var_names)) {
+        if (!is.null(vars$binary_display[[i]])) {
+          var_overrides$binary_display[[var_names[i]]] <- vars$binary_display[[i]]
+        }
+      }
     }
   } else if (is.character(vars)) {
     # vars is a character vector
@@ -278,6 +345,7 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       include_all = include_all,
       all_label = all_label,
       digits = digits,
+      n_pct_order = n_pct_order,
       center_fun = center_fun,
       spread_fun = spread_fun,
       var_types = var_types,
@@ -292,6 +360,7 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       var_subheaders = var_subheaders,
       var_overrides = var_overrides,
       digits = digits,
+      n_pct_order = n_pct_order,
       center_fun = center_fun,
       spread_fun = spread_fun,
       var_types = var_types
@@ -376,8 +445,8 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
 #'
 #' @keywords internal
 .create_table1_core <- function(data, var_names, var_labels, var_subheaders,
-                                var_overrides, digits, center_fun, spread_fun,
-                                var_types) {
+                               var_overrides, digits, n_pct_order,
+                               center_fun, spread_fun, var_types) {
   
   # Process each variable
   results <- list()
@@ -436,6 +505,12 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       spread_fun
     }
     
+    var_digits <- if (var_name %in% names(var_overrides$digits)) {
+      var_overrides$digits[[var_name]]
+    } else {
+      digits
+    }
+    
     # Get variable type override if provided
     var_type <- if (!is.null(var_types) && var_name %in% names(var_types)) {
       var_types[[var_name]]
@@ -450,18 +525,47 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
       NULL
     }
     
+    var_combine_remaining <- if (var_name %in% names(var_overrides$combine_remaining)) {
+      var_overrides$combine_remaining[[var_name]]
+    } else {
+      FALSE
+    }
+    
+    var_other_label <- if (var_name %in% names(var_overrides$other_label)) {
+      var_overrides$other_label[[var_name]]
+    } else {
+      NULL
+    }
+    
+    var_binary_display <- if (var_name %in% names(var_overrides$binary_display)) {
+      var_overrides$binary_display[[var_name]]
+    } else {
+      NULL
+    }
+    
+    if (is.character(var_combine_remaining) && length(var_combine_remaining) == 1) {
+      if (is.null(var_other_label) || !nzchar(var_other_label)) {
+        var_other_label <- var_combine_remaining
+      }
+      var_combine_remaining <- TRUE
+    }
+    
     # Summarize variable (group parameter omitted)
-    results[[length(results) + 1]] <- .summarize_variable(
+    results[[length(results) + 1]] <- .summarize_variable( # nolint
       data = data,
       variable = var_name,
       label = var_label,
       var_type = var_type,
-      digits = digits,
+      digits = var_digits,
       center_fun = var_center_fun,
       spread_fun = var_spread_fun,
       group = NULL,
       scaling = 100,
-      level_spec = var_level_spec
+      level_spec = var_level_spec,
+      combine_remaining = var_combine_remaining,
+      other_label = var_other_label,
+      binary_display = var_binary_display,
+      n_pct_order = n_pct_order
     )
   }
   
@@ -477,8 +581,9 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
 #' @keywords internal
 .create_multi_column_table1 <- function(data, var_names, var_labels, var_subheaders,
                                         parsed_varlist, var_overrides, subgroups,
-                                        include_all, all_label, digits, center_fun,
-                                        spread_fun, var_types, empty_subgroup_handling) {
+                                        include_all, all_label, digits, n_pct_order,
+                                        center_fun, spread_fun, var_types,
+                                        empty_subgroup_handling) {
   
   # Process subgroups
   subgroup_list <- list()
@@ -617,6 +722,7 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
           var_subheaders = var_subheaders,
           var_overrides = var_overrides,
           digits = digits,
+          n_pct_order = n_pct_order,
           center_fun = center_fun,
           spread_fun = spread_fun,
           var_types = var_types
@@ -630,6 +736,7 @@ specify_table1 <- function(data, vars, labels = NULL, digits = 2,
           var_subheaders = var_subheaders,
           var_overrides = var_overrides,
           digits = digits,
+          n_pct_order = n_pct_order,
           center_fun = center_fun,
           spread_fun = spread_fun,
           var_types = var_types

@@ -104,6 +104,18 @@ parse_yaml_varlist <- function(yaml_input, file = FALSE) {
         if ("levels" %in% names(value)) {
           structured_var$levels <- .parse_level_spec(value$levels)
         }
+        if ("digits" %in% names(value)) {
+          structured_var$digits <- value$digits
+        }
+        if ("combine_remaining" %in% names(value)) {
+          structured_var$combine_remaining <- value$combine_remaining
+        }
+        if ("other_label" %in% names(value)) {
+          structured_var$other_label <- value$other_label
+        }
+        if ("binary_display" %in% names(value)) {
+          structured_var$binary_display <- value$binary_display
+        }
         result[[name]] <- structured_var
       } else {
         # Nested structure (subheader) - recurse

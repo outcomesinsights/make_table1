@@ -157,14 +157,23 @@ table1 <- specify_table1(data, vars = varlist)
 
 ## Variable-Level Overrides
 
-To override `center_fun` and/or `spread_fun` for a specific variable, use the structured format:
+To override per-variable settings, use the structured format:
 
 ```r
 variable_name = list(
   var = "variable_name",      # Required: variable name in data
   label = "Display Label",    # Required: label for table
   center_fun = median,        # Optional: override center function
-  spread_fun = IQR            # Optional: override spread function
+  spread_fun = IQR,           # Optional: override spread function
+  digits = 3,                 # Optional: override rounding
+  levels = c("A", "B"),       # Optional: explicit categorical order
+  combine_remaining = TRUE,   # Optional: add "other" bucket
+  other_label = "Other",      # Optional: label for other bucket
+  binary_display = list(      # Optional: binary display control
+    levels = "single",        # "single" or "both"
+    value = "yes",            # "yes" or "no" when single
+    layout = "one_row"        # "one_row" or "two_row"
+  )
 )
 ```
 

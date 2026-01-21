@@ -71,6 +71,29 @@ test_that(".parse_varlist handles multiple subheaders", {
   expect_equal(result$vars$subheader, c("Demographics", "Demographics", "Treatment"))
 })
 
+test_that(".parse_varlist captures per-variable options", {
+  varlist <- list(
+    "Variables" = list(
+      status = list(
+        var = "status",
+        label = "Status",
+        levels = c("Yes", "No"),
+        combine_remaining = TRUE,
+        other_label = "Other",
+        digits = 1,
+        binary_display = list(levels = "single", value = "yes", layout = "one_row")
+      )
+    )
+  )
+  
+  result <- .parse_varlist(varlist)
+  
+  expect_equal(result$digits$status, 1)
+  expect_true(isTRUE(result$combine_remaining$status))
+  expect_equal(result$other_label$status, "Other")
+  expect_true(is.list(result$binary_display$status))
+})
+
 test_that(".parse_varlist handles deep nesting", {
   varlist <- list(
     "Table Title" = list(
