@@ -37,6 +37,10 @@
   var_center_funs <- list()
   var_spread_funs <- list()
   var_levels <- list()  # Store level specifications
+  var_digits <- list()
+  var_combine_remaining <- list()
+  var_other_label <- list()
+  var_binary_display <- list()
   table_title <- NULL
   
   # Check if top level has a title (single named element at top level)
@@ -76,9 +80,20 @@
           if ("levels" %in% names(item)) {
             var_levels[[item$var]] <<- item$levels
           }
+          if ("digits" %in% names(item)) {
+            var_digits[[item$var]] <<- item$digits
+          }
+          if ("combine_remaining" %in% names(item)) {
+            var_combine_remaining[[item$var]] <<- item$combine_remaining
+          }
+          if ("other_label" %in% names(item)) {
+            var_other_label[[item$var]] <<- item$other_label
+          }
+          if ("binary_display" %in% names(item)) {
+            var_binary_display[[item$var]] <<- item$binary_display
+          }
         } else {
           # This is a subheader - recurse into it
-          is_subheader <- TRUE
           .process_level(item, current_subheader = item_name)
         }
       } else if (is.character(item) && length(item) == 1) {
@@ -110,6 +125,10 @@
     center_funs = var_center_funs,
     spread_funs = var_spread_funs,
     levels = var_levels,
+    digits = var_digits,
+    combine_remaining = var_combine_remaining,
+    other_label = var_other_label,
+    binary_display = var_binary_display,
     title = table_title
   )
 }

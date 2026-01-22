@@ -15,13 +15,17 @@
 #'     \item Character vector: Level names to include (for factors) or create
 #'     \item List with values: list("Label1" = "value1", "Label2" = "value2")
 #'   }
+#' @param combine_remaining Logical, whether to add an "other" level for any
+#'   values not included in level_spec (default = FALSE)
+#' @param other_label Optional label for the "other" level (default = "Other")
 #'
 #' @return List of level definitions, each with:
 #'   - label: Display label for the level
 #'   - filter: Function that returns logical vector for that level
 #'
 #' @keywords internal
-.expand_levels <- function(data, variable, label, level_spec = NULL) {
+.expand_levels <- function(data, variable, label, level_spec = NULL,
+                           combine_remaining = FALSE, other_label = NULL) {
   
   if (!variable %in% names(data)) {
     stop("Variable '", variable, "' not found in data")
@@ -37,10 +41,8 @@
   # Handle different level specification formats
   if (is.character(level_spec)) {
     # Character vector: level names
-    return(.expand_levels_from_names(x, label, level_spec))
-  }
-  
-  if (is.list(level_spec)) {
+    level_defs <- .expand_levels_from_names(x, label, level_spec)
+  } else if (is.list(level_spec)) {
     # Check if it's a named list of functions or a list of value mappings
     # Handle mixed lists (some functions, some values)
     has_functions <- any(sapply(level_spec, is.function))
@@ -55,17 +57,53 @@
       value_levels <- .expand_levels_from_values(x, label, value_list)
       
       # Combine both
-      return(c(func_levels, value_levels))
+      level_defs <- c(func_levels, value_levels)
     } else if (has_functions) {
       # All functions
-      return(.expand_levels_from_functions(label, level_spec))
+      level_defs <- .expand_levels_from_functions(label, level_spec)
     } else {
       # All values
-      return(.expand_levels_from_values(x, label, level_spec))
+      level_defs <- .expand_levels_from_values(x, label, level_spec)
     }
+  } else {
+    stop("Invalid level_spec format for variable '", variable, "'")
   }
   
-  stop("Invalid level_spec format for variable '", variable, "'")
+  # Add "other" level for remaining values if requested
+  if (isTRUE(combine_remaining)) {
+    if (is.null(other_label) || !nzchar(other_label)) {
+      other_label <- "Other"
+    }
+    if (other_label %in% names(level_defs)) {
+      new_label <- make.unique(c(names(level_defs), other_label))
+      new_label <- new_label[length(new_label)]
+      warning(
+        "Level label '", other_label, "' already exists; using '", new_label, "' for remaining values."
+      )
+      other_label <- new_label
+    }
+    base_defs <- level_defs
+    level_defs[[other_label]] <- local({
+      defs <- base_defs
+      function(d) {
+        if (length(defs) == 0) {
+          return(!is.na(d))
+        }
+        matches <- Reduce(
+          `|`,
+          lapply(defs, function(f) {
+            res <- f(d)
+            res[is.na(res)] <- FALSE
+            res
+          })
+        )
+        remaining <- !matches & !is.na(d)
+        remaining
+      }
+    })
+  }
+  
+  return(level_defs)
 }
 
 #' Auto-expand Levels Based on Variable Type

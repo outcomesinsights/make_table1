@@ -139,6 +139,99 @@ test_that("specify_table1 handles empty data gracefully", {
   )
 })
 
+test_that("specify_table1 supports combine_remaining with character levels", {
+  data <- data.frame(
+    group = c("A", "B", "C", "D"),
+    stringsAsFactors = FALSE
+  )
+  
+  varlist <- list(
+    "Vars" = list(
+      group = list(
+        var = "group",
+        label = "Group",
+        levels = c("B", "A"),
+        combine_remaining = TRUE,
+        other_label = "Other"
+      )
+    )
+  )
+  
+  result <- specify_table1(data, vars = varlist)
+  
+  expect_true(any(grepl("Other", result$varname)))
+})
+
+test_that("specify_table1 supports binary display modes", {
+  data <- data.frame(
+    flag = c(TRUE, FALSE, TRUE, NA)
+  )
+  
+  # Default is one-row yes
+  default_res <- specify_table1(data, vars = c("flag"))
+  expect_equal(nrow(default_res), 1)
+  
+  # Single level, two-row layout
+  varlist_two_row <- list(
+    "Vars" = list(
+      flag = list(
+        var = "flag",
+        label = "Flag",
+        binary_display = list(levels = "single", value = "no", layout = "two_row")
+      )
+    )
+  )
+  two_row_res <- specify_table1(data, vars = varlist_two_row)
+  expect_equal(nrow(two_row_res), 2)
+  expect_true(any(grepl("No", two_row_res$varname)))
+  
+  # Both levels, two-row layout (label + two indented rows)
+  varlist_both <- list(
+    "Vars" = list(
+      flag = list(
+        var = "flag",
+        label = "Flag",
+        binary_display = list(levels = "both")
+      )
+    )
+  )
+  both_res <- specify_table1(data, vars = varlist_both)
+  expect_equal(nrow(both_res), 3)
+  expect_true(any(grepl("Yes", both_res$varname)))
+  expect_true(any(grepl("No", both_res$varname)))
+})
+
+test_that("specify_table1 supports n_pct_order formatting", {
+  data <- data.frame(
+    status = factor(c("Yes", "No", "Yes", "No"))
+  )
+  
+  res_default <- specify_table1(data, vars = c("status"))
+  expect_true(any(grepl("\\(50", res_default$statistic)))
+  
+  res_pct_n <- specify_table1(data, vars = c("status"), n_pct_order = "pct_n")
+  expect_true(any(grepl("% \\(2\\)", res_pct_n$statistic)))
+})
+
+test_that("specify_table1 allows per-variable digits overrides", {
+  data <- data.frame(
+    score = c(1.2345, 5.6789)
+  )
+  
+  varlist <- list(
+    "Vars" = list(
+      score = list(
+        var = "score",
+        label = "Score",
+        digits = 3
+      )
+    )
+  )
+  
+  res <- specify_table1(data, vars = varlist, digits = 1)
+  expect_true(any(grepl("3\\.457", res$statistic)))
+})
+
 test_that("specify_table1 validates input", {
   expect_error(specify_table1("not a data frame", vars = c("age")))
 })

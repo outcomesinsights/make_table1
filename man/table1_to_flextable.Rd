@@ -32,11 +32,11 @@ table1_to_flextable(
 If NULL (default), automatically set to TRUE for single-column, FALSE for multi-column.}
 
 \item{header_n_format}{Character string format for sample size in headers.
-Use \code{{n}} as placeholder. Default: \code{"(n={n})"}.
-Examples: \code{"(n={n})"}, \code{"\n(n={n})"}, \code{" ({n})"}.}
+Use \code{\{n\}} as placeholder. Default: \code{"(n=\{n\})"}.
+Examples: \code{"(n=\{n\})"}, \code{"\n(n=\{n\})"}, \code{" (\{n\})"}.}
 
 \item{cell_n_format}{Character string format for appending n to cell values when
-they differ from header. Use \code{{n}} as placeholder. Default: \code{", n={n}"}.}
+they differ from header. Use \code{\{n\}} as placeholder. Default: \code{", n=\{n\}"}.}
 
 \item{indent_width}{Numeric, width of indentation for factor levels in units
 (default = 2). Applied using flextable padding.}
@@ -46,7 +46,7 @@ description. If TRUE, creates 3-line header: (1) Variable/Group name, (2) N = sa
 (3) Format description. Default: FALSE.}
 
 \item{format_description}{Character string for format description line in multi-line headers.
-Default: \code{"\% (N) or Mean (SD)"}.}
+Default: "\% (N) or Mean (SD)".}
 
 \item{footer_text}{Character string to add as footer row. If NULL (default), no footer is added.}
 
@@ -54,8 +54,8 @@ Default: \code{"\% (N) or Mean (SD)"}.}
 
 \item{table_layout}{Character, table layout. Options: "autofit" (default), "fixed", "auto".}
 
-\item{theme}{Character, flextable theme. Options: "table1" (custom theme optimized for Table 1),
-"vanilla" (default), "booktabs", "alafoli", etc. Set to NULL to skip theme application.}
+\item{theme}{Character, flextable theme. Options: "table1" (default, custom theme optimized for Table 1),
+"vanilla", "booktabs", "alafoli", etc. Set to NULL to skip theme application.}
 
 \item{format_line_fontsize}{Numeric, font size for format description line (line 3) in
 multi-line headers. Default: 9.}

@@ -15,6 +15,7 @@
   include_all,
   all_label,
   digits,
+  n_pct_order,
   center_fun,
   spread_fun,
   var_types,

@@ -9,6 +9,7 @@ specify_table1(
   vars,
   labels = NULL,
   digits = 2,
+  n_pct_order = c("n_pct", "pct_n"),
   center_fun = mean,
   spread_fun = sd,
   group = NULL,
@@ -41,7 +42,8 @@ Nested list format:
         var3 = list(var = "var3", label = "Label 3", 
                    center_fun = median, spread_fun = IQR),
         var4 = list(var = "var4", label = "Label 4",
-                   levels = list("Level 1" = "value1", "Level 2" = "value2"))
+                   levels = list("Level 1" = "value1", "Level 2" = "value2"),
+                   combine_remaining = TRUE, other_label = "Other")
       ),
       "Subheader 2" = list(...)
     )
@@ -65,6 +67,8 @@ YAML format (recommended for readability):
         levels:
           "Level 1": "value1"
           "Level 2": "value2"
+        combine_remaining: true
+        other_label: "Other"
     "Subheader 2":
       var5: "Label 5"
   }
@@ -76,6 +80,8 @@ for details.}
 If \code{vars} is a 2-column data frame, labels are taken from column 2.}
 
 \item{digits}{Number of digits for continuous variables (default = 2)}
+
+\item{n_pct_order}{Order for categorical stats: "n_pct" (default) or "pct_n"}
 
 \item{center_fun}{Function for center statistic of continuous variables (default = \code{mean}).
 Other options: \code{median}, or custom function.}
@@ -127,8 +133,8 @@ characteristics of study participants.
 The function automatically detects variable types and formats them appropriately:
 \itemize{
 \item Continuous variables: Center (Spread) - default is Mean (SD)
-\item Binary variables: \% (n)
-\item Categorical variables: \% (n) for each level (auto-expanded or user-specified)
+\item Binary variables: n (pct) by default
+\item Categorical variables: n (pct) for each level (auto-expanded or user-specified)
 }
 
 For categorical variables, you can specify which levels to include and their labels

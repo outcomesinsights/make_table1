@@ -44,6 +44,71 @@ varlist <- data.frame(
 table1 <- specify_table1(data, vars = varlist)
 ```
 
+## Per-Variable Options (Nested List or YAML)
+
+You can override formatting and categorical behavior per variable by using a
+structured definition. Common options include:
+
+- `levels`: Explicit level order for categorical variables
+- `combine_remaining`: Add an "other" level for values not listed in `levels`
+- `other_label`: Label for the "other" level (default is "Other")
+- `binary_display`: Control binary display using nested fields
+  (`levels`, `value`, `layout`)
+- `digits`: Override rounding for a specific variable
+
+Example (nested list):
+
+```r
+varlist <- list(
+  "Demographics" = list(
+    sex = list(
+      var = "sex",
+      label = "Sex",
+      levels = c("F", "M"),
+      combine_remaining = TRUE,
+      other_label = "Other"
+    ),
+    treated = list(
+      var = "treated",
+      label = "Treated",
+      binary_display = list(
+        levels = "single",
+        value = "yes",
+        layout = "one_row"
+      )
+    ),
+    score = list(
+      var = "score",
+      label = "Score",
+      digits = 3
+    )
+  )
+)
+```
+
+Example (YAML):
+
+```yaml
+Demographics:
+  sex:
+    var: sex
+    label: Sex
+    levels: ["F", "M"]
+    combine_remaining: true
+    other_label: Other
+  treated:
+    var: treated
+    label: Treated
+    binary_display:
+      levels: single
+      value: yes
+      layout: one_row
+  score:
+    var: score
+    label: Score
+    digits: 3
+```
+
 ## Method 4: With Subheaders
 
 To add subheaders that group related variables, include variable names that don't exist in your data. These will be treated as subheader rows:
@@ -107,6 +172,12 @@ Note: Variables that are all NA will be detected as subheaders automatically.
 2. **Use descriptive labels** - they appear in the final table
 3. **Group related variables** with subheaders for better readability
 4. **Keep variable names consistent** between your data and variable list
+
+## Global Formatting Options
+
+- `n_pct_order`: Controls categorical/binary formatting.
+  - `"n_pct"` (default): `n (pct)`
+  - `"pct_n"`: `pct (n)`
 
 ## Examples
 

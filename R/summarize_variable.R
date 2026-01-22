@@ -13,13 +13,28 @@
 #' @param group Deprecated. Not currently used.
 #' @param scaling Scaling factor for percentages (default = 100)
 #' @param level_spec Optional level specification for categorical variables
+#' @param combine_remaining Logical, whether to add an "other" level when
+#'   level_spec is provided
+#' @param other_label Optional label for the "other" level
+#' @param binary_display Optional list controlling binary display (levels/value/layout)
+#' @param n_pct_order Order for categorical stats: "n_pct" or "pct_n"
 #'
 #' @return Data frame with one or more rows (for categorical variables)
 #'
 #' @keywords internal
+.format_n_pct <- function(pct_fmt, n_fmt, n_pct_order = c("n_pct", "pct_n")) {
+  n_pct_order <- match.arg(n_pct_order)
+  if (n_pct_order == "n_pct") {
+    return(paste0(n_fmt, " (", pct_fmt, "%)"))
+  }
+  paste0(pct_fmt, "% (", n_fmt, ")")
+}
+
 .summarize_variable <- function(data, variable, label = NULL, var_type = NULL,
                                 digits = 2, center_fun = mean, spread_fun = sd,
                                 group = NULL, scaling = 100, level_spec = NULL,
+                                combine_remaining = FALSE, other_label = NULL,
+                                binary_display = NULL, n_pct_order = "n_pct",
                                 center_fun_name = NULL, spread_fun_name = NULL) {
   
   # Get label
@@ -100,32 +115,102 @@
   
   # Binary variables
   if (var_type == "binary") {
-    # Handle factors
-    if (is.factor(x)) {
-      # Use second level as reference
-      if (nlevels(x) >= 2) {
-        ref_level <- levels(x)[2]
-        n_positive <- sum(x == ref_level, na.rm = TRUE)
-      } else {
-        ref_level <- levels(x)[1]
-        n_positive <- sum(x == ref_level, na.rm = TRUE)
+    # Normalize binary display options
+    binary_levels <- "single"
+    binary_value <- "yes"
+    binary_layout <- "one_row"
+    
+    if (is.list(binary_display)) {
+      if (!is.null(binary_display$levels)) {
+        binary_levels <- binary_display$levels
       }
-    } else if (is.logical(x)) {
-      n_positive <- sum(x, na.rm = TRUE)
-      ref_level <- "TRUE"
-    } else {
-      # Numeric binary (0/1)
-      n_positive <- sum(x != 0 & !is.na(x))
-      ref_level <- "1"
+      if (!is.null(binary_display$value)) {
+        binary_value <- binary_display$value
+      }
+      if (!is.null(binary_display$layout)) {
+        binary_layout <- binary_display$layout
+      }
     }
     
-    pct <- (n_positive / n_valid) * scaling
-    pct_fmt <- fmt(pct, digits = digits)
-    n_fmt <- fmt(n_positive, digits = 0)
+    if (!binary_levels %in% c("single", "both")) {
+      warning("Invalid binary_display$levels for variable '", variable, "'. Using 'single'.")
+      binary_levels <- "single"
+    }
+    if (!binary_value %in% c("yes", "no")) {
+      warning("Invalid binary_display$value for variable '", variable, "'. Using 'yes'.")
+      binary_value <- "yes"
+    }
+    if (!binary_layout %in% c("one_row", "two_row")) {
+      warning("Invalid binary_display$layout for variable '", variable, "'. Using 'one_row'.")
+      binary_layout <- "one_row"
+    }
     
-    statistic <- paste0(pct_fmt, "% (", n_fmt, ")")
+    if (binary_levels == "both") {
+      binary_layout <- "two_row"
+    }
     
-    # Create subheader row with variable label
+    # Helper to compute counts and labels
+    get_binary_summary <- function(target) {
+      if (is.factor(x)) {
+        levels_x <- levels(x)
+        yes_level <- if (length(levels_x) >= 2) levels_x[2] else levels_x[1]
+        no_level <- levels_x[1]
+        level_value <- if (target == "yes") yes_level else no_level
+        level_label <- level_value
+        n_target <- sum(x == level_value, na.rm = TRUE)
+      } else if (is.logical(x)) {
+        level_label <- if (target == "yes") "Yes" else "No"
+        n_target <- if (target == "yes") sum(x, na.rm = TRUE) else sum(!x, na.rm = TRUE)
+      } else {
+        # Numeric binary (0/1)
+        level_label <- if (target == "yes") "Yes" else "No"
+        n_target <- if (target == "yes") {
+          sum(x != 0 & !is.na(x))
+        } else {
+          sum(x == 0 & !is.na(x))
+        }
+      }
+      
+      pct <- (n_target / n_valid) * scaling
+      pct_fmt <- fmt(pct, digits = digits)
+      n_fmt <- fmt(n_target, digits = 0)
+      
+      list(
+        label = level_label,
+        statistic = .format_n_pct(pct_fmt, n_fmt, n_pct_order)
+      )
+    }
+    
+    if (binary_levels == "single") {
+      summary <- get_binary_summary(binary_value)
+      if (binary_layout == "one_row") {
+        return(data.frame(
+          varname = label,
+          statistic = summary$statistic,
+          n = n_valid,
+          stringsAsFactors = FALSE
+        ))
+      }
+      
+      # Two-row layout: label row + indented level row
+      subheader_row <- data.frame(
+        varname = label,
+        statistic = NA_character_,
+        n = NA_integer_,
+        stringsAsFactors = FALSE
+      )
+      
+      indented_row <- data.frame(
+        varname = paste0("\u00A0\u00A0", summary$label),
+        statistic = summary$statistic,
+        n = n_valid,
+        stringsAsFactors = FALSE
+      )
+      
+      return(rbind(subheader_row, indented_row))
+    }
+    
+    # Both levels: label row + two indented rows
     subheader_row <- data.frame(
       varname = label,
       statistic = NA_character_,
@@ -133,25 +218,36 @@
       stringsAsFactors = FALSE
     )
     
-    # Create indented row with statistic in statistic column
-    # Use non-breaking spaces (\u00A0) to ensure they display properly in Word/flextable
-    # For binary variables, we'll use a generic label or the reference level name
     if (is.factor(x)) {
-      level_label <- ref_level
-    } else if (is.logical(x)) {
-      level_label <- "Yes"
+      levels_x <- levels(x)
+      level_values <- if (length(levels_x) >= 2) levels_x[1:2] else levels_x
+      summaries <- lapply(level_values, function(level_value) {
+        n_target <- sum(x == level_value, na.rm = TRUE)
+        pct <- (n_target / n_valid) * scaling
+        pct_fmt <- fmt(pct, digits = digits)
+        n_fmt <- fmt(n_target, digits = 0)
+        list(
+          label = level_value,
+          statistic = .format_n_pct(pct_fmt, n_fmt, n_pct_order)
+        )
+      })
     } else {
-      level_label <- "Yes"  # For numeric binary (0/1)
+      summaries <- list(
+        get_binary_summary("yes"),
+        get_binary_summary("no")
+      )
     }
     
-    indented_row <- data.frame(
-      varname = paste0("\u00A0\u00A0", level_label),
-      statistic = statistic,
-      n = n_valid,
-      stringsAsFactors = FALSE
-    )
+    level_rows <- lapply(summaries, function(summary) {
+      data.frame(
+        varname = paste0("\u00A0\u00A0", summary$label),
+        statistic = summary$statistic,
+        n = n_valid,
+        stringsAsFactors = FALSE
+      )
+    })
     
-    return(rbind(subheader_row, indented_row))
+    return(rbind(subheader_row, do.call(rbind, level_rows)))
   }
   
   # Categorical variables (factors with >2 levels)
@@ -160,7 +256,14 @@
     # If level_spec is provided, use it; otherwise auto-expand
     if (!is.null(level_spec)) {
       # Expand levels using specification
-      level_defs <- .expand_levels(data, variable, label, level_spec)
+      level_defs <- .expand_levels( # nolint
+        data = data,
+        variable = variable,
+        label = label,
+        level_spec = level_spec,
+        combine_remaining = combine_remaining,
+        other_label = other_label
+      )
       
       if (length(level_defs) == 0) {
         # No levels to expand - treat as single variable with subheader + indented row
@@ -219,7 +322,7 @@
         indented_level_label <- paste0("\u00A0\u00A0", level_label)
         result_rows[[i]] <- data.frame(
           varname = indented_level_label,
-          statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
+          statistic = .format_n_pct(pct_fmt, n_fmt, n_pct_order),
           n = n_valid,
           stringsAsFactors = FALSE
         )
@@ -266,7 +369,7 @@
           level_label <- paste0("\u00A0\u00A0", level_i)
           level_rows[[i]] <- data.frame(
             varname = level_label,
-            statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
+            statistic = .format_n_pct(pct_fmt, n_fmt, n_pct_order),
             n = n_valid,
             stringsAsFactors = FALSE
           )
@@ -300,7 +403,7 @@
           level_label <- paste0("\u00A0\u00A0", level_i)
           level_rows[[i]] <- data.frame(
             varname = level_label,
-            statistic = paste0(pct_fmt, "% (", n_fmt, ")"),
+            statistic = .format_n_pct(pct_fmt, n_fmt, n_pct_order),
             n = n_valid,
             stringsAsFactors = FALSE
           )

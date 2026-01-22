@@ -106,6 +106,27 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #'   Options: "before" or "after" (default).
 #' @param digits Numeric, number of decimal places for summary statistics when
 #'   creating individual tables. Default: 1.
+#' @param include_multi_table Logical, whether to automatically create and add
+#'   a multi-column table after individual tables. Default: TRUE.
+#' @param multi_table_include_all Logical, whether to include an "All" column
+#'   in the multi-table. Passed to \code{\link{specify_table1}}. Default: FALSE.
+#' @param multi_table_all_label Character string, label for the "All" column in
+#'   multi-table. Passed to \code{\link{specify_table1}}. Default: "All".
+#' @param multi_table_empty_subgroup_handling Character string, how to handle
+#'   empty subgroups in multi-table. Options: "na", "zero", or "skip". Passed to
+#'   \code{\link{specify_table1}}. Default: "na".
+#' @param multi_table_section_heading Character string, optional section heading
+#'   for the multi-table (e.g., "Tables for All Patients"). If NULL, no section
+#'   heading is added.
+#' @param multi_table_caption Character string, optional caption for the multi-table
+#'   (e.g., "Table 1: Population Characteristics for All Patients"). If NULL,
+#'   constructed from \code{caption_prefix} + "All Patients" + \code{caption_suffix}.
+#' @param multi_table_section_style Character string, paragraph style for the
+#'   multi-table section heading. Default: "heading 1".
+#' @param subtable_orientation Character string, page orientation for individual
+#'   subtables. Options: "portrait" (default) or "landscape".
+#' @param multi_table_orientation Character string, page orientation for the
+#'   multi-table. Options: "portrait" or "landscape" (default).
 #' @param ... Additional arguments passed to \code{\link{table1_to_flextable}}.
 #'
 #' @return The modified \code{officer} document object.
@@ -114,7 +135,12 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #' If \code{data}, \code{vars}, and \code{subgroups} are all provided, this
 #' function automatically creates individual Table 1 tables for each subgroup
 #' by filtering the data and adding them to the document with section headings,
-#' captions, and page breaks. Otherwise, it adds the \code{table1_result} as-is.
+#' captions, and page breaks. If \code{include_multi_table = TRUE} (default),
+#' it also automatically creates and adds a multi-column table showing all
+#' subgroups side-by-side. Otherwise, it adds the \code{table1_result} as-is.
+#'
+#' A warning is issued if the multi-table has more than 6 groups, as this may
+#' result in a very wide table that is difficult to read.
 #'
 #' @examples
 #' \dontrun{
@@ -123,7 +149,7 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #' doc <- table1_word_doc() |>
 #'   implement_table1(table1, caption = "Table 1: Patient Characteristics")
 #'
-#' # Individual tables for each subgroup (automatic)
+#' # Individual tables for each subgroup (automatic, with multi-table)
 #' doc <- table1_word_doc() |>
 #'   implement_table1(
 #'     data = dt_prep,
@@ -132,7 +158,10 @@ add_section_heading <- function(doc, text, style = "heading 1", pos = "after") {
 #'       "All Diagnosed" = function(d) rep(TRUE, nrow(d)),
 #'       "No Treatment" = function(d) d$treatment == "None"
 #'     ),
-#'     footer_text = "Note: Results presented as % (count)..."
+#'     footer_text = "Note: Results presented as % (count)...",
+#'     include_multi_table = TRUE,  # Creates multi-table automatically
+#'     subtable_orientation = "portrait",  # Portrait for individual tables
+#'     multi_table_orientation = "landscape"  # Landscape for multi-table
 #'   )
 #' }
 #'
@@ -151,6 +180,15 @@ implement_table1 <- function(doc,
                       add_page_breaks = TRUE,
                       first_table_pos = "after",
                       digits = 1,
+                      include_multi_table = TRUE,
+                      multi_table_include_all = FALSE,
+                      multi_table_all_label = "All",
+                      multi_table_empty_subgroup_handling = "na",
+                      multi_table_section_heading = NULL,
+                      multi_table_caption = NULL,
+                      multi_table_section_style = "heading 1",
+                      subtable_orientation = "portrait",
+                      multi_table_orientation = "landscape",
                       ...) {
   if (!requireNamespace("officer", quietly = TRUE)) {
     stop("The 'officer' package is required. Install with: install.packages('officer')")
@@ -177,6 +215,13 @@ implement_table1 <- function(doc,
     if (is.null(subgroup_names) || any(subgroup_names == "")) {
       stop("'subgroups' must have non-empty names")
     }
+    
+    # Validate orientation parameters
+    subtable_orientation <- match.arg(subtable_orientation, c("portrait", "landscape"))
+    multi_table_orientation <- match.arg(multi_table_orientation, c("portrait", "landscape"))
+    
+    # Set orientation for individual tables
+    doc <- set_orientation(doc, subtable_orientation, type = "continuous")
     
     # Loop through each subgroup
     for (i in seq_along(subgroup_names)) {
@@ -236,6 +281,59 @@ implement_table1 <- function(doc,
       if (add_page_breaks && i < length(subgroup_names)) {
         doc <- add_page_break(doc)
       }
+    }
+    
+    # Create and add multi-table if requested
+    if (include_multi_table) {
+      # Warn if too many groups
+      if (length(subgroups) > 6) {
+        warning(
+          "Multi-table has more than 6 groups (", length(subgroups), "). ",
+          "This may result in a very wide table that is difficult to read. ",
+          "Consider reducing the number of groups or using landscape orientation.",
+          call. = FALSE
+        )
+      }
+      
+      # Set orientation for multi-table
+      doc <- set_orientation(doc, multi_table_orientation, type = "continuous")
+      
+      # Create multi-column table
+      table1_multi <- specify_table1(
+        data = data,
+        vars = vars,
+        subgroups = subgroups,
+        include_all = multi_table_include_all,
+        all_label = multi_table_all_label,
+        digits = digits,
+        empty_subgroup_handling = multi_table_empty_subgroup_handling
+      )
+      
+      # Add section heading if provided
+      if (!is.null(multi_table_section_heading)) {
+        doc <- add_section_heading(
+          doc,
+          text = multi_table_section_heading,
+          style = multi_table_section_style,
+          pos = "after"
+        )
+      }
+      
+      # Determine caption for multi-table
+      multi_caption <- if (!is.null(multi_table_caption)) {
+        multi_table_caption
+      } else {
+        paste0(caption_prefix, "All Patients", caption_suffix)
+      }
+      
+      # Add multi-table to document
+      doc <- implement_table1(
+        doc,
+        table1_result = table1_multi,
+        caption = multi_caption,
+        caption_style = caption_style,
+        ...
+      )
     }
   } else {
     # Use table1_result as-is

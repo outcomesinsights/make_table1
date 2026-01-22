@@ -19,6 +19,15 @@ implement_table1(
   add_page_breaks = TRUE,
   first_table_pos = "after",
   digits = 1,
+  include_multi_table = TRUE,
+  multi_table_include_all = FALSE,
+  multi_table_all_label = "All",
+  multi_table_empty_subgroup_handling = "na",
+  multi_table_section_heading = NULL,
+  multi_table_caption = NULL,
+  multi_table_section_style = "heading 1",
+  subtable_orientation = "portrait",
+  multi_table_orientation = "landscape",
   ...
 )
 }
@@ -61,6 +70,36 @@ Options: "before" or "after" (default).}
 \item{digits}{Numeric, number of decimal places for summary statistics when
 creating individual tables. Default: 1.}
 
+\item{include_multi_table}{Logical, whether to automatically create and add
+a multi-column table after individual tables. Default: TRUE.}
+
+\item{multi_table_include_all}{Logical, whether to include an "All" column
+in the multi-table. Passed to \code{\link{specify_table1}}. Default: FALSE.}
+
+\item{multi_table_all_label}{Character string, label for the "All" column in
+multi-table. Passed to \code{\link{specify_table1}}. Default: "All".}
+
+\item{multi_table_empty_subgroup_handling}{Character string, how to handle
+empty subgroups in multi-table. Options: "na", "zero", or "skip". Passed to
+\code{\link{specify_table1}}. Default: "na".}
+
+\item{multi_table_section_heading}{Character string, optional section heading
+for the multi-table (e.g., "Tables for All Patients"). If NULL, no section
+heading is added.}
+
+\item{multi_table_caption}{Character string, optional caption for the multi-table
+(e.g., "Table 1: Population Characteristics for All Patients"). If NULL,
+constructed from \code{caption_prefix} + "All Patients" + \code{caption_suffix}.}
+
+\item{multi_table_section_style}{Character string, paragraph style for the
+multi-table section heading. Default: "heading 1".}
+
+\item{subtable_orientation}{Character string, page orientation for individual
+subtables. Options: "portrait" (default) or "landscape".}
+
+\item{multi_table_orientation}{Character string, page orientation for the
+multi-table. Options: "portrait" or "landscape" (default).}
+
 \item{...}{Additional arguments passed to \code{\link{table1_to_flextable}}.}
 }
 \value{
@@ -76,7 +115,12 @@ instead of using \code{table1_result}.
 If \code{data}, \code{vars}, and \code{subgroups} are all provided, this
 function automatically creates individual Table 1 tables for each subgroup
 by filtering the data and adding them to the document with section headings,
-captions, and page breaks. Otherwise, it adds the \code{table1_result} as-is.
+captions, and page breaks. If \code{include_multi_table = TRUE} (default),
+it also automatically creates and adds a multi-column table showing all
+subgroups side-by-side. Otherwise, it adds the \code{table1_result} as-is.
+
+A warning is issued if the multi-table has more than 6 groups, as this may
+result in a very wide table that is difficult to read.
 }
 \examples{
 \dontrun{
@@ -85,7 +129,7 @@ table1 <- specify_table1(data, vars = c("age", "sex"))
 doc <- table1_word_doc() |>
   implement_table1(table1, caption = "Table 1: Patient Characteristics")
 
-# Individual tables for each subgroup (automatic)
+# Individual tables for each subgroup (automatic, with multi-table)
 doc <- table1_word_doc() |>
   implement_table1(
     data = dt_prep,
@@ -94,7 +138,10 @@ doc <- table1_word_doc() |>
       "All Diagnosed" = function(d) rep(TRUE, nrow(d)),
       "No Treatment" = function(d) d$treatment == "None"
     ),
-    footer_text = "Note: Results presented as \% (count)..."
+    footer_text = "Note: Results presented as \% (count)...",
+    include_multi_table = TRUE,  # Creates multi-table automatically
+    subtable_orientation = "portrait",  # Portrait for individual tables
+    multi_table_orientation = "landscape"  # Landscape for multi-table
   )
 }
 
