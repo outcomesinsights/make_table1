@@ -8,17 +8,17 @@
 #' @param show_n_column Logical, whether to show n column for single-column tables.
 #'   If NULL (default), automatically set to TRUE for single-column, FALSE for multi-column.
 #' @param header_n_format Character string format for sample size in headers.
-#'   Use \code{{n}} as placeholder. Default: \code{"(n={n})"}.
-#'   Examples: \code{"(n={n})"}, \code{"\n(n={n})"}, \code{" ({n})"}.
+#'   Use \code{\{n\}} as placeholder. Default: \code{"(n=\{n\})"}.
+#'   Examples: \code{"(n=\{n\})"}, \code{"\n(n=\{n\})"}, \code{" (\{n\})"}.
 #' @param cell_n_format Character string format for appending n to cell values when
-#'   they differ from header. Use \code{{n}} as placeholder. Default: \code{", n={n}"}.
+#'   they differ from header. Use \code{\{n\}} as placeholder. Default: \code{", n=\{n\}"}.
 #' @param indent_width Numeric, width of indentation for factor levels in units
 #'   (default = 2). Applied using flextable padding.
 #' @param multiline_header Logical, whether to create multi-line headers with format
 #'   description. If TRUE, creates 3-line header: (1) Variable/Group name, (2) N = sample size,
 #'   (3) Format description. Default: FALSE.
 #' @param format_description Character string for format description line in multi-line headers.
-#'   Default: \code{"% (N) or Mean (SD)"}.
+#'   Default: "% (N) or Mean (SD)".
 #' @param footer_text Character string to add as footer row. If NULL (default), no footer is added.
 #' @param table_width Numeric, table width as proportion of page (0-1). Default: 1.0.
 #' @param table_layout Character, table layout. Options: "autofit" (default), "fixed", "auto".

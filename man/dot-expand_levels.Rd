@@ -4,7 +4,14 @@
 \alias{.expand_levels}
 \title{Expand Variable with Level Specifications}
 \usage{
-.expand_levels(data, variable, label, level_spec = NULL)
+.expand_levels(
+  data,
+  variable,
+  label,
+  level_spec = NULL,
+  combine_remaining = FALSE,
+  other_label = NULL
+)
 }
 \arguments{
 \item{data}{Data frame}
@@ -21,6 +28,11 @@
 \item Character vector: Level names to include (for factors) or create
 \item List with values: list("Label1" = "value1", "Label2" = "value2")
 }}
+
+\item{combine_remaining}{Logical, whether to add an "other" level for any
+values not included in level_spec (default = FALSE)}
+
+\item{other_label}{Optional label for the "other" level (default = "Other")}
 }
 \value{
 List of level definitions, each with:
